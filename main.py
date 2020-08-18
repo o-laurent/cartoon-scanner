@@ -2,7 +2,8 @@
 #   améliorer l'interface graphique
 #   mettre l'interface graphique dans un autre fichier
 #   import tkinter as tk
-#   rotation de la photo
+#   rotation de la photo suivant plusieurs angles 
+#   moyenne des traits du bord, min et max 
 
 # load and show an image with Pillow
 from PIL import Image
@@ -14,7 +15,7 @@ from os import listdir
 from os.path import isfile, join
 
 #imgName = imgNameInput.get()
-seriesName = 'plaidpenche'
+seriesName = 'plaid'
 
 def isBlack(arr):
     var = int(arr[0])+int(arr[1])+int(arr[2])
@@ -65,11 +66,13 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            images.append(digitalizeImage(seriesName+'_'+str(i)+'.jpg'))
+            images.append(digitalizeImage(seriesName+'_'+str(i)+'.jpg', False))
         # Merge 
         merge4(seriesName, images[0], images[1], images[2], images[3])
 
-def digitalizeImage(imgName):
+def digitalizeImage(imgName, ROTATION=True):
+    if ROTATION:
+        print('Tentative de rotation')
     # Open the image form working directory
     imagePIL = Image.open(imgName)
     imageGPIL = imagePIL.convert('L')
@@ -203,28 +206,31 @@ def digitalizeImage(imgName):
 
     # Rotation 
     #On considère la droite passant par les deux coins droits et on cherche son intersection avec l'horizontale passant par le coin en bas à gauche
-    i_A = leftLowerEdge[0]
-    i_C = rightTopEdge[0]
-    i_D = rightLowerEdge[0]
-    j_A = leftLowerEdge[1]
-    j_C = rightTopEdge[1]
-    j_D = rightLowerEdge[1]
-    is_C = -i_C + i_A
-    is_D = -i_D + i_A
-    jp_C = j_C - j_A
-    jp_D = j_D - j_A
-    
-    a = (is_C-is_D)/(jp_C-jp_D)
-    b = -jp_D*a
+    if ROTATION:
+        i_A = leftLowerEdge[0]
+        i_C = rightTopEdge[0]
+        i_D = rightLowerEdge[0]
+        j_A = leftLowerEdge[1]
+        j_C = rightTopEdge[1]
+        j_D = rightLowerEdge[1]
+        is_C = -i_C + i_A
+        is_D = -i_D + i_A
+        jp_C = j_C - j_A
+        jp_D = j_D - j_A
+        
+        a = (is_C-is_D)/(jp_C-jp_D)
+        b = -jp_D*a
 
-    right_intersection = [i_A, j_A-b/a]
-    rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
+        right_intersection = [i_A, j_A-b/a]
+        rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
 
-    angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
-    if i_A > i_D: #negative angle
-        angleRLE *= -1
+        angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
+        if i_A > i_D: #negative angle
+            angleRLE *= -1
 
-    print(angleRLE)
+        print(angleRLE)
+    else:
+        angleRLE = 0
 
     # Crop and sharpen the image
     box = (leftThreshold, upperThreshold, rightThreshold, lowerThreshold) #left upper right lower

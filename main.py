@@ -8,13 +8,13 @@
 from PIL import Image
 import numpy as np 
 from imageTools import sharpenImage, post_process
-
+from square_edge_detection import left_low_edge, left_top_edge, right_low_edge, right_top_edge, intersection_right
 # to load the list of files
 from os import listdir
 from os.path import isfile, join
 
 #imgName = imgNameInput.get()
-seriesName = 'plaid'
+seriesName = 'plaidpenche'
 
 def isBlack(arr):
     var = int(arr[0])+int(arr[1])+int(arr[2])
@@ -185,15 +185,50 @@ def digitalizeImage(imgName):
     print('right : '+str(maxJ))
 
     # Find the edges 
-    leftTopEdge = [upperThreshold, leftThreshold]
-    rightTopEdge = [upperThreshold, rightThreshold]
-    rightLowerEdge = [lowerThreshold, rightThreshold]
-    leftLowerEdge = [lowerThreshold, leftThreshold]
+    leftTopEdge = left_top_edge(image, upperThreshold, width)
+    rightTopEdge = right_top_edge(image, upperThreshold, width)
+    rightLowerEdge = right_low_edge(image, lowerThreshold, width)
+    leftLowerEdge = left_low_edge(image, lowerThreshold, width)
 
+    upper_length = ((leftTopEdge[0]-rightTopEdge[0])**2+(leftTopEdge[1]-rightTopEdge[1])**2)**(1/2)
+    lower_length = ((leftLowerEdge[0]-rightLowerEdge[0])**2+(leftLowerEdge[1]-rightLowerEdge[1])**2)**(1/2)
+    left_length = ((leftTopEdge[0]-leftLowerEdge[0])**2+(leftTopEdge[1]-leftLowerEdge[1])**2)**(1/2)
+    right_length = ((rightLowerEdge[0]-rightTopEdge[0])**2+(rightLowerEdge[1]-rightTopEdge[1])**2)**(1/2)
+
+    print(lower_length)
+    print('longueur côté haut : '+str(upper_length)+' pixels')
+    print('longueur côté bas : '+str(lower_length)+' pixels')
+    print('longueur côté gauche : '+str(left_length)+' pixels')
+    print('longueur côté droite : '+str(right_length)+' pixels')
+
+    # Rotation 
+    #On considère la droite passant par les deux coins droits et on cherche son intersection avec l'horizontale passant par le coin en bas à gauche
+    i_A = leftLowerEdge[0]
+    i_C = rightTopEdge[0]
+    i_D = rightLowerEdge[0]
+    j_A = leftLowerEdge[1]
+    j_C = rightTopEdge[1]
+    j_D = rightLowerEdge[1]
+    is_C = -i_C + i_A
+    is_D = -i_D + i_A
+    jp_C = j_C - j_A
+    jp_D = j_D - j_A
     
+    a = (is_C-is_D)/(jp_C-jp_D)
+    b = -jp_D*a
+
+    right_intersection = [i_A, j_A-b/a]
+    rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
+
+    angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
+    if i_A > i_D: #negative angle
+        angleRLE *= -1
+
+    print(angleRLE)
+
     # Crop and sharpen the image
     box = (leftThreshold, upperThreshold, rightThreshold, lowerThreshold) #left upper right lower
-    imagePIL = imagePIL.crop(box)
+    imagePIL = imagePIL.rotate(angleRLE).crop(box)
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]

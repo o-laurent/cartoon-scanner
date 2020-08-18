@@ -29,9 +29,7 @@ def isCorner(image, i, j):
     #print([i, j])
     return boolean
 
-imgName = 'plaid_2_d.jpg'
-
-imagePIL = Image.open(imgName)
+"""imagePIL = Image.open(imgName)
 imageGPIL = imagePIL.convert('L')
 
 # get the size of the image
@@ -145,7 +143,7 @@ while not found and j > leftThreshold + 100:
     j -= 1
 
 rightThreshold = maxJ + 172
-print('right : '+str(maxJ))
+print('right : '+str(maxJ))"""
 
 # Coin supérieur gauche 
 def left_top_edge(image, upperThreshold, width):
@@ -175,7 +173,7 @@ def left_top_edge(image, upperThreshold, width):
             i -= up//2
         else:
             i += down//2
-
+    print(i, j-1)
     return [i, j-1]
 
 # Coin supérieur droit 
@@ -206,13 +204,13 @@ def right_top_edge(image, upperThreshold, width):
             i -= up//2
         else:
             i += down//2
-
+    print(i, j+1)
     return [i, j+1]
 
 # Coin inférieur gauche 
 def left_low_edge(image, lowerThreshold, width):
     """ runs along the cartoon strokes to find the left low edge """
-    i = lowerThreshold + 172
+    i = lowerThreshold - 172
     j = width//2
     corner = False 
     while not corner:
@@ -237,13 +235,13 @@ def left_low_edge(image, lowerThreshold, width):
             i -= up//2
         else:
             i += down//2
-
+    print(i, j-1)
     return [i, j-1]
 
 # Coin inférieur droit 
 def right_low_edge(image, lowerThreshold, width):
     """ runs along the cartoon strokes to find the right low edge """
-    i = lowerThreshold + 172
+    i = lowerThreshold - 172
     j = width//2
     corner = False 
     while not corner:
@@ -268,16 +266,21 @@ def right_low_edge(image, lowerThreshold, width):
             i -= up//2
         else:
             i += down//2
-
+    print(i, j+1)
     return [i, j+1]
 
 
-"""print(leftTopEdge)
-print(rightTopEdge)
-print(leftLowEdge)
-print(rightLowEdge)"""
-
-print('longueur côté haut : '+str((leftTopEdge[1]**2+rightTopEdge[1]**2)**(1/2))+'pixels')
-print('longueur côté bas : '+str((leftLowEdge[1]**2+rightLowEdge[1]**2)**(1/2))+'pixels')
-print('longueur côté gauche : '+str((leftTopEdge[0]**2+leftLowEdge[0]**2)**(1/2))+'pixels')
-print('longueur côté droite : '+str((rightLowEdge[0]**2+rightTopEdge[0]**2)**(1/2))+'pixels')
+def intersection_right(image, width, leftLowEdge, lower_length):
+    i = leftLowEdge[0]
+    j = min(width-1, round(leftLowEdge[1] + 1.2*lower_length))
+    stack = [False]*7
+    comp = [True]*7
+    found = False
+    while not found:
+        if stack == comp:
+            found = True
+        else:
+            j -= 1
+            stack.pop(0)
+            stack.append(isBlack(image[i][j]))
+    return [i,j+7]

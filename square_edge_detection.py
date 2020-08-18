@@ -147,77 +147,135 @@ while not found and j > leftThreshold + 100:
 rightThreshold = maxJ + 172
 print('right : '+str(maxJ))
 
-# Find the edges 
-leftTopEdge = [upperThreshold, leftThreshold]
-rightTopEdge = [upperThreshold, rightThreshold]
-rightLowerEdge = [lowerThreshold, rightThreshold]
-leftLowerEdge = [lowerThreshold, leftThreshold]
-
-
 # Coin supérieur gauche 
-i = upperThreshold + 172
-j = width//2
-corner = False 
-while not corner:
-    while isBlack(image[i][j]):
-        j -= 1
-    if int(isBlack(image[i+1][j]))+int(isBlack(image[i+2][j]))+int(isBlack(image[i+3][j])) >= 2:
-        i += 1
-    elif int(isBlack(image[i-1][j]))+int(isBlack(image[i-2][j]))+int(isBlack(image[i-3][j])) >= 2:
-        i -= 1
-    else:
-        corner = True
-leftTopEdge = [i, j-1]
+def left_top_edge(image, upperThreshold, width):
+    """ runs along the cartoon strokes to find the left top edge """
+    i = upperThreshold + 172
+    j = width//2
+    corner = False 
+    while not corner:
+        while isBlack(image[i][j]):
+            j -= 1
+        up = 0
+        for varI in range(1,11):
+            up += int(isBlack(image[i-varI][j]))
+
+        down = 0
+        for varI in range(1,11):
+            down += int(isBlack(image[i+varI][j]))
+
+        left = 0
+        for varI in range(-5,6):
+            for varJ in range(1,6):
+                left += int(isBlack(image[i+varI][j-varJ]))
+
+        if left < 10:
+            corner = True
+        if up >= down:
+            i -= up//2
+        else:
+            i += down//2
+
+    return [i, j-1]
 
 # Coin supérieur droit 
-i = upperThreshold + 172
-j = width//2
-corner = False 
-while not corner:
-    while isBlack(image[i][j]):
-        j += 1
-    if int(isBlack(image[i+1][j]))+int(isBlack(image[i+2][j]))+int(isBlack(image[i+3][j])) >= 2:
-        i += 1
-    elif int(isBlack(image[i-1][j]))+int(isBlack(image[i-2][j]))+int(isBlack(image[i-3][j])) >= 2:
-        i -= 1
-    else:
-        corner = True
-rightTopEdge = [i, j]
+def right_top_edge(image, upperThreshold, width):
+    """ runs along the cartoon strokes to find the right top edge """
+    i = upperThreshold + 172
+    j = width//2
+    corner = False 
+    while not corner:
+        while isBlack(image[i][j]):
+            j += 1
+        up = 0
+        for varI in range(1,11):
+            up += int(isBlack(image[i-varI][j]))
 
-# Coin supérieur gauche 
-i = lowerThreshold - 172
-j = width//2
-corner = False 
-while not corner:
-    while isBlack(image[i][j]):
-        j -= 1
-    if int(isBlack(image[i+1][j]))+int(isBlack(image[i+2][j]))+int(isBlack(image[i+3][j])) >= 2:
-        i += 1
-    elif int(isBlack(image[i-1][j]))+int(isBlack(image[i-2][j]))+int(isBlack(image[i-3][j])) >= 2:
-        i -= 1
-    else:
-        corner = True
-leftLowEdge = [i, j-1]
+        down = 0
+        for varI in range(1,11):
+            down += int(isBlack(image[i+varI][j]))
 
-# Coin supérieur droit 
-i = lowerThreshold - 172
-j = width//2
-corner = False 
-while not corner:
-    while isBlack(image[i][j]):
-        j += 1
-    if int(isBlack(image[i+1][j]))+int(isBlack(image[i+2][j]))+int(isBlack(image[i+3][j])) >= 2:
-        i += 1
-    elif int(isBlack(image[i-1][j]))+int(isBlack(image[i-2][j]))+int(isBlack(image[i-3][j])) >= 2:
-        i -= 1
-    else:
-        corner = True
-rightLowEdge = [i, j]
+        right = 0
+        for varI in range(-5,6):
+            for varJ in range(1,6):
+                right += int(isBlack(image[i+varI][j+varJ]))
 
-print(leftTopEdge)
+        if right < 10:
+            corner = True
+        if up >= down:
+            i -= up//2
+        else:
+            i += down//2
+
+    return [i, j+1]
+
+# Coin inférieur gauche 
+def left_low_edge(image, lowerThreshold, width):
+    """ runs along the cartoon strokes to find the left low edge """
+    i = lowerThreshold + 172
+    j = width//2
+    corner = False 
+    while not corner:
+        while isBlack(image[i][j]):
+            j -= 1
+        up = 0
+        for varI in range(1,11):
+            up += int(isBlack(image[i-varI][j]))
+
+        down = 0
+        for varI in range(1,11):
+            down += int(isBlack(image[i+varI][j]))
+
+        left = 0
+        for varI in range(-5,6):
+            for varJ in range(1,6):
+                left += int(isBlack(image[i+varI][j-varJ]))
+
+        if left < 10:
+            corner = True
+        if up >= down:
+            i -= up//2
+        else:
+            i += down//2
+
+    return [i, j-1]
+
+# Coin inférieur droit 
+def right_low_edge(image, lowerThreshold, width):
+    """ runs along the cartoon strokes to find the right low edge """
+    i = lowerThreshold + 172
+    j = width//2
+    corner = False 
+    while not corner:
+        while isBlack(image[i][j]):
+            j += 1
+        up = 0
+        for varI in range(1,11):
+            up += int(isBlack(image[i-varI][j]))
+
+        down = 0
+        for varI in range(1,11):
+            down += int(isBlack(image[i+varI][j]))
+
+        right = 0
+        for varI in range(-5,6):
+            for varJ in range(1,6):
+                right += int(isBlack(image[i+varI][j+varJ]))
+
+        if right < 10:
+            corner = True
+        if up >= down:
+            i -= up//2
+        else:
+            i += down//2
+
+    return [i, j+1]
+
+
+"""print(leftTopEdge)
 print(rightTopEdge)
 print(leftLowEdge)
-print(rightLowEdge)
+print(rightLowEdge)"""
 
 print('longueur côté haut : '+str((leftTopEdge[1]**2+rightTopEdge[1]**2)**(1/2))+'pixels')
 print('longueur côté bas : '+str((leftLowEdge[1]**2+rightLowEdge[1]**2)**(1/2))+'pixels')

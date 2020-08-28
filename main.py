@@ -1,9 +1,11 @@
-#   gérer quand pas assez de largeur autour de l'image
+#   ***gérer quand pas assez de largeur autour de l'image***
 #   améliorer l'interface graphique
 #   mettre l'interface graphique dans un autre fichier
 #   import tkinter as tk
 #   rotation de la photo suivant plusieurs angles
 #   moyenne des traits du bord, min et max, noircir le trait à fond
+#   créer un exécutable
+#   Baisser la signature
 
 # load and show an image with Pillow
 from PIL import Image
@@ -15,7 +17,7 @@ from os import listdir
 from os.path import isfile, join
 
 #imgName = imgNameInput.get()
-seriesName = 'plaid'
+seriesName = 'plaidpenche'
 
 
 def isBlack(arr):
@@ -72,7 +74,7 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            images.append(digitalizeImage(seriesName+'_'+str(i)+'.jpg', False))
+            images.append(digitalizeImage(seriesName+'_'+str(i)+'.jpg', True))
         # Merge
         merge4(seriesName, images[0], images[1], images[2], images[3])
 
@@ -91,7 +93,7 @@ def digitalizeImage(imgName, ROTATION=True):
     # matrixize and sharpen the image
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
-    # find the real dimensions
+    # find the square
     # on commence par le haut au milieu, on cherche le premier pixel noir
     found = False
     mid = width//2
@@ -117,7 +119,6 @@ def digitalizeImage(imgName, ROTATION=True):
         i += 1
 
     upperThreshold = maxI - 172
-    print('upper : '+str(maxI))
 
     found = False
     maxI = 0
@@ -141,7 +142,6 @@ def digitalizeImage(imgName, ROTATION=True):
                 found = True
         i -= 1
     lowerThreshold = maxI + 172
-    print('lower : '+str(maxI))
 
     found = False
     mid = height//2
@@ -169,7 +169,6 @@ def digitalizeImage(imgName, ROTATION=True):
                 found = True
         j += 1
     leftThreshold = maxJ - 172
-    print('left : '+str(maxJ))
 
     found = False
     maxJ = 0
@@ -196,7 +195,6 @@ def digitalizeImage(imgName, ROTATION=True):
                 found = True
         j -= 1
     rightThreshold = maxJ + 172
-    print('right : '+str(maxJ))
 
     # Find the edges
     leftTopEdge = left_top_edge(image, upperThreshold, width)
@@ -213,7 +211,6 @@ def digitalizeImage(imgName, ROTATION=True):
     right_length = ((rightLowerEdge[0]-rightTopEdge[0])
                     ** 2+(rightLowerEdge[1]-rightTopEdge[1])**2)**(1/2)
 
-    print(lower_length)
     print('longueur côté haut : '+str(upper_length)+' pixels')
     print('longueur côté bas : '+str(lower_length)+' pixels')
     print('longueur côté gauche : '+str(left_length)+' pixels')
@@ -222,6 +219,7 @@ def digitalizeImage(imgName, ROTATION=True):
     # Rotation
     # On considère la droite passant par les deux coins droits et on cherche son intersection avec l'horizontale passant par le coin en bas à gauche
     if ROTATION:
+        # Right Lower Edge Angle
         i_A = leftLowerEdge[0]
         i_C = rightTopEdge[0]
         i_D = rightLowerEdge[0]
@@ -234,24 +232,124 @@ def digitalizeImage(imgName, ROTATION=True):
         jp_D = j_D - j_A
 
         a = (is_C-is_D)/(jp_C-jp_D)
-        b = -jp_D*a
+        b = is_D-jp_D*a
 
         right_intersection = [i_A, j_A-b/a]
         rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (
             right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
-
+        print(i_A, i_D)
         angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
-        if i_A > i_D:  # negative angle
+        if i_A < i_D:  # negative angle
             angleRLE *= -1
 
-        print(angleRLE)
+        print('Lower angle: ' + str(angleRLE))
+
+        # Left Top Edge Angle
+
+        i_A = rightTopEdge[0]
+
+        i_C = leftLowerEdge[0]
+        i_D = leftTopEdge[0]
+        j_A = rightTopEdge[1]
+        j_C = leftLowerEdge[1]
+        j_D = leftTopEdge[1]
+        ip_C = i_C - i_A
+        ip_D = i_D - i_A
+        jp_C = -j_C + j_A
+        jp_D = -j_D + j_A
+
+        a = (ip_C-ip_D)/(jp_C-jp_D)
+        b = ip_D-jp_D*a
+
+        left_intersection = [i_A, j_A+b/a]
+        # print(left_intersection)
+        leftTopEdge_dist = ((left_intersection[0]-leftTopEdge[0])**2 + (
+            left_intersection[1]-leftTopEdge[1])**2)**(1/2)
+
+        print(i_A, i_D)
+        angleLTE = np.arctan(leftTopEdge_dist/upper_length)*180/np.pi
+        if i_A > i_D:  # negative angle
+            angleLTE *= -1
+
+        print('upper angle: '+str(angleLTE))
+
+        # Left Lower Edge Angle
+        i_A = leftTopEdge[0]
+        i_C = rightLowerEdge[0]
+        i_D = leftLowerEdge[0]
+        j_A = leftTopEdge[1]
+        j_C = rightLowerEdge[1]
+        j_D = leftLowerEdge[1]
+        ip_C = j_C - j_A
+        ip_D = j_D - j_A
+        jp_C = i_C - i_A
+        jp_D = i_D - i_A
+
+        a = (ip_C-ip_D)/(jp_C-jp_D)
+        b = ip_D-jp_D*a
+
+        left_intersection = [i_A-b/a, j_A]
+        # print(left_intersection)
+        leftTopEdge_dist = ((left_intersection[0]-leftLowerEdge[0])**2 + (
+            left_intersection[1]-leftLowerEdge[1])**2)**(1/2)
+        angleLLE = np.arctan(leftTopEdge_dist/left_length)*180/np.pi
+        if j_A > j_D:  # negative angle
+            angleLLE *= -1
+
+        print('left angle: '+str(angleLLE))
+
+        # Right Lower Edge Angle
+        i_A = rightLowerEdge[0]
+        i_C = leftTopEdge[0]
+        i_D = rightTopEdge[0]
+        j_A = rightLowerEdge[1]
+        j_C = leftTopEdge[1]
+        j_D = rightTopEdge[1]
+        ip_C = -j_C + j_A
+        ip_D = -j_D + j_A
+        jp_C = -i_C + i_A
+        jp_D = -i_D + i_A
+
+        a = (ip_C-ip_D)/(jp_C-jp_D)
+        b = ip_D-jp_D*a
+
+        right_intersection = [i_A+b/a, j_A]
+        # print(right_intersection)
+        rightLowerEdge_dist = ((right_intersection[0]-rightTopEdge[0])**2 + (
+            right_intersection[1]-rightTopEdge[1])**2)**(1/2)
+        angleRTE = np.arctan(rightLowerEdge_dist/left_length)*180/np.pi
+        if j_A < j_D:  # negative angle
+            angleRTE *= -1
+
+        print('right angle: '+str(angleRTE))
+
     else:
         angleRLE = 0
+        angleLTE = 0
+        angleLLE = 0
+        angleRTE = 0
+
+    # Looking for absurd values
+
+    angles = [angleLLE, angleLTE, angleRLE, angleRTE]
+    meanLLE = angleLTE/3 + angleRLE/3 + angleRTE/3
+    meanLTE = angleLLE/3 + angleRLE/3 + angleRTE/3
+    meanRLE = angleLLE/3 + angleLTE/3 + angleRTE/3
+    meanRTE = angleLLE/3 + angleLTE/3 + angleRLE/3
+
+    if (abs(abs(angleLLE)) > 2*abs(meanLLE)) or (abs(angleLLE) < 1/2*abs(meanLLE)):
+        angles.pop(0)
+    if (abs(abs(angleLTE)) > 2*abs(meanLTE)) or (abs(angleLTE) < 1/2*abs(meanLTE)):
+        angles.pop(1)
+    if (abs(abs(angleRLE)) > 2*abs(meanRLE)) or (abs(angleRLE) < 1/2*abs(meanRLE)):
+        angles.pop(-2)
+    if (abs(abs(angleRTE)) > 2*abs(meanRTE)) or (abs(angleRTE) < 1/2*abs(meanRTE)):
+        angles.pop(-1)
 
     # Crop and sharpen the image
     box = (leftThreshold, upperThreshold, rightThreshold,
            lowerThreshold)  # left upper right lower
-    imagePIL = imagePIL.rotate(angleRLE).crop(box)
+    imagePIL = imagePIL.rotate(-sum(angles)/len(angles)).crop(box)
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]

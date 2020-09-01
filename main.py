@@ -349,7 +349,8 @@ def digitalizeImage(imgName, ROTATION=True):
     # Crop and sharpen the image
     box = (leftThreshold, upperThreshold, rightThreshold,
            lowerThreshold)  # left upper right lower
-    imagePIL = imagePIL.rotate(-sum(angles)/len(angles)).crop(box)
+    white = (255,255,255)
+    imagePIL = imagePIL.rotate(-sum(angles)/len(angles), fillcolor = white).crop(box)
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]
@@ -374,7 +375,7 @@ def digitalizeImage(imgName, ROTATION=True):
     numImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
 
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
-    box = (2800-172-50-50, 2800-172-50-600, 2800-172-25, 2800-172-50)
+    box = (2800-172-50-60, 2800-172-50-600, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
     numImagePIL.save(imgName.split('.')[0]+'_d.jpg')
     return newImage

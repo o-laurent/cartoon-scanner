@@ -391,7 +391,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
     box = (2800-172-50-60, 2800-172-50-600, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
-    numImagePIL.save('./processed/'+imgName.split('.')[0]+'_d.jpg')
+    numImagePIL.save('./processed/'+seriesName+'/'+imgName.split('.')[0]+'_d.jpg')
     return newImage
 
 

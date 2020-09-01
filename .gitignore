@@ -1,3 +1,6 @@
 plaid*
 paques
 __pycache__
+.vscode
+to_process/*
+processed/*

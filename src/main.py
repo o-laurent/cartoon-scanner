@@ -1,5 +1,7 @@
 #   moyenne des traits du bord, min et max, noircir le trait à fond
 #   Baisser la signature
+# gérer 2,3 images
+# gérer les hors cadre
 
 
 # load and show an image with Pillow
@@ -14,8 +16,10 @@ from os.path import isfile, join
 # Get the name of the series
 
 from gui import graphical_user_interface
+seriesName = ''
+while seriesName == '':
+    seriesName = graphical_user_interface()
 
-seriesName = graphical_user_interface()
 
 def isBlack(arr):
     var = int(arr[0])+int(arr[1])+int(arr[2])
@@ -50,24 +54,23 @@ def instaPrep(seriesName: str):
     try:
         mkdir(path)
     except OSError:
-        print ("Creation of the directory %s failed" % path)
+        print("Creation of the directory %s failed" % path)
     else:
-        print ("Successfully created the directory %s " % path)
-
+        print("Successfully created the directory %s " % path)
 
     if nb == 0:
         print('Aucune photo trouvée. Fin du processus.')
 
     if nb == 1:
         print('1 photo à traiter')
-        digitalizeImage(seriesName, '../to_process/'+seriesName+'_1.jpg')
+        digitalizeImage(seriesName, seriesName+'_1.jpg')
 
     if nb == 2:
         print('2 photos à traiter')
         # digitalize separately
         for i in range(1, 3):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName, '../to_process/'+seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg')
 
     if nb == 3:
         print('3 photos à traiter')
@@ -75,7 +78,7 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 4):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName, '../to_process/'+seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg')
 
     if nb == 4:
         print('4 photos à traiter')
@@ -83,8 +86,8 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            images.append('../to_process/' +
-                          digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg', True))
+            images.append(
+                digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg', True))
         # Merge
         merge4(seriesName, images[0], images[1], images[2], images[3])
 
@@ -388,7 +391,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
     box = (2800-172-50-60, 2800-172-50-600, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
-    numImagePIL.save('../processed'+imgName.split('.')[0]+'_d.jpg')
+    numImagePIL.save('./processed/'+imgName.split('.')[0]+'_d.jpg')
     return newImage
 
 
@@ -417,7 +420,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL.paste(image3PIL, box3)
     newImagePIL.paste(image4PIL, box4)
     newImagePIL.paste(signaturePIL, boxs)
-    newImagePIL.save('../processed'+seriesName+'_d.jpg')
+    newImagePIL.save('./processed/'+seriesName+'_d.jpg')
 
 
 instaPrep(seriesName)

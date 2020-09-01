@@ -1,6 +1,7 @@
 # entrée valide 
 # proposer un nom logique 
-# 
+# afficher l'erreur 
+
 from tkinter import Tk, Label, StringVar, Entry, Button
 
 def graphical_user_interface():

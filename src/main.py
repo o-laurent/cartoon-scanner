@@ -1,11 +1,6 @@
-#   ***gérer quand pas assez de largeur autour de l'image***
-#   améliorer l'interface graphique
-#   mettre l'interface graphique dans un autre fichier
-#   import tkinter as tk
-#   rotation de la photo suivant plusieurs angles
 #   moyenne des traits du bord, min et max, noircir le trait à fond
-#   créer un exécutable
 #   Baisser la signature
+
 
 # load and show an image with Pillow
 from PIL import Image
@@ -13,12 +8,14 @@ import numpy as np
 from imageTools import sharpenImage, post_process
 from square_edge_detection import left_low_edge, left_top_edge, right_low_edge, right_top_edge, intersection_right
 # to load the list of files
-from os import listdir
+from os import listdir, mkdir, getcwd
 from os.path import isfile, join
 
-#imgName = imgNameInput.get()
-seriesName = 'plaidpenche'
+# Get the name of the series
 
+from gui import graphical_user_interface
+
+seriesName = graphical_user_interface()
 
 def isBlack(arr):
     var = int(arr[0])+int(arr[1])+int(arr[2])
@@ -40,25 +37,37 @@ def transY(sY, y):
 
 def instaPrep(seriesName: str):
     # Load list of files
-    file_list = [f for f in listdir() if isfile(f)]
+    file_list = [f for f in listdir('./to_process/')]
+    print(file_list)
     file_list = [f for f in file_list if f.split('.')[1].lower() == 'jpg' and f.split('_')[0] == seriesName and f.split(
         '_')[-1].split('.')[0] != 'd' and (f.split('.')[0]+'_d.'+f.split('.')[1] not in file_list)]
     file_list = list(map(lambda x: x.split('.')[0], file_list))
     file_list.sort()
     nb = len(file_list)
+
+    path = './processed/'+seriesName
+
+    try:
+        mkdir(path)
+    except OSError:
+        print ("Creation of the directory %s failed" % path)
+    else:
+        print ("Successfully created the directory %s " % path)
+
+
     if nb == 0:
         print('Aucune photo trouvée. Fin du processus.')
 
     if nb == 1:
         print('1 photo à traiter')
-        digitalizeImage(seriesName+'_1.jpg')
+        digitalizeImage(seriesName, '../to_process/'+seriesName+'_1.jpg')
 
     if nb == 2:
         print('2 photos à traiter')
         # digitalize separately
         for i in range(1, 3):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(seriesName, '../to_process/'+seriesName+'_'+str(i)+'.jpg')
 
     if nb == 3:
         print('3 photos à traiter')
@@ -66,7 +75,7 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 4):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(seriesName, '../to_process/'+seriesName+'_'+str(i)+'.jpg')
 
     if nb == 4:
         print('4 photos à traiter')
@@ -74,16 +83,17 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            images.append(digitalizeImage(seriesName+'_'+str(i)+'.jpg', True))
+            images.append('../to_process/' +
+                          digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg', True))
         # Merge
         merge4(seriesName, images[0], images[1], images[2], images[3])
 
 
-def digitalizeImage(imgName, ROTATION=True):
+def digitalizeImage(seriesName, imgName, ROTATION=True):
     if ROTATION:
         print('Tentative de rotation')
     # Open the image form working directory
-    imagePIL = Image.open(imgName)
+    imagePIL = Image.open('./to_process/'+imgName)
     imageGPIL = imagePIL.convert('L')
 
     # get the size of the image
@@ -349,8 +359,9 @@ def digitalizeImage(imgName, ROTATION=True):
     # Crop and sharpen the image
     box = (leftThreshold, upperThreshold, rightThreshold,
            lowerThreshold)  # left upper right lower
-    white = (255,255,255)
-    imagePIL = imagePIL.rotate(-sum(angles)/len(angles), fillcolor = white).crop(box)
+    white = (255, 255, 255)
+    imagePIL = imagePIL.rotate(-sum(angles)/len(angles),
+                               fillcolor=white).crop(box)
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]
@@ -377,7 +388,7 @@ def digitalizeImage(imgName, ROTATION=True):
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
     box = (2800-172-50-60, 2800-172-50-600, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
-    numImagePIL.save(imgName.split('.')[0]+'_d.jpg')
+    numImagePIL.save('../processed'+imgName.split('.')[0]+'_d.jpg')
     return newImage
 
 
@@ -406,7 +417,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL.paste(image3PIL, box3)
     newImagePIL.paste(image4PIL, box4)
     newImagePIL.paste(signaturePIL, boxs)
-    newImagePIL.save(seriesName+'_d.jpg')
+    newImagePIL.save('../processed'+seriesName+'_d.jpg')
 
 
 instaPrep(seriesName)

@@ -1,3 +1,4 @@
 #!/bin/bash
 
+mogrify -format jpg ./to_process/*
 python3 ./src/main.py

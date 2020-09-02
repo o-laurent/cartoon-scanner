@@ -11,15 +11,16 @@ import numpy as np
 from imageTools import sharpenImage, post_process
 from square_edge_detection import left_low_edge, left_top_edge, right_low_edge, right_top_edge, intersection_right
 # to load the list of files
-from os import listdir, mkdir, getcwd
+from os import listdir, mkdir, getcwd, rename
 from os.path import isfile, join
 
 # Get the name of the series
 
 from gui import graphical_user_interface
 seriesName = ''
+possibility = listdir('./to_process/')[0].split('_')[0]
 while seriesName == '':
-    seriesName = graphical_user_interface()
+    seriesName = graphical_user_interface(possibility)
 
 
 def isBlack(arr):
@@ -50,14 +51,14 @@ def instaPrep(seriesName: str):
     file_list.sort()
     nb = len(file_list)
 
-    path = './processed/'+seriesName
-
+    src_path = './to_process/'
+    out_path = './processed/'+seriesName+'/'
     try:
-        mkdir(path)
+        mkdir(out_path)
     except OSError:
-        print("Creation of the directory %s failed" % path)
+        print("Creation of the directory %s failed" % out_path)
     else:
-        print("Successfully created the directory %s " % path)
+        print("Successfully created the directory %s " % out_path)
 
     if nb == 0:
         print('Aucune photo trouvée. Fin du processus.')
@@ -91,6 +92,9 @@ def instaPrep(seriesName: str):
                 digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg', True))
         # Merge
         merge4(seriesName, images[0], images[1], images[2], images[3])
+    for i in range(nb):
+        rename(src_path+seriesName+'_'+str(i+1)+'.jpg',
+               out_path+seriesName+'_'+str(i+1)+'.jpg')
 
 
 def digitalizeImage(seriesName, imgName, ROTATION=True):
@@ -225,10 +229,10 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     right_length = ((rightLowerEdge[0]-rightTopEdge[0])
                     ** 2+(rightLowerEdge[1]-rightTopEdge[1])**2)**(1/2)
 
-    print('longueur côté haut : '+str(upper_length)+' pixels')
-    print('longueur côté bas : '+str(lower_length)+' pixels')
-    print('longueur côté gauche : '+str(left_length)+' pixels')
-    print('longueur côté droite : '+str(right_length)+' pixels')
+    #print('longueur côté haut : '+str(upper_length)+' pixels')
+    #print('longueur côté bas : '+str(lower_length)+' pixels')
+    #print('longueur côté gauche : '+str(left_length)+' pixels')
+    #print('longueur côté droit : '+str(right_length)+' pixels')
 
     # Rotation
     # On considère la droite passant par les deux coins droits et on cherche son intersection avec l'horizontale passant par le coin en bas à gauche
@@ -331,7 +335,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         # print(right_intersection)
         rightLowerEdge_dist = ((right_intersection[0]-rightTopEdge[0])**2 + (
             right_intersection[1]-rightTopEdge[1])**2)**(1/2)
-        angleRTE = np.arctan(rightLowerEdge_dist/left_length)*180/np.pi
+        angleRTE = np.arctan(rightLowerEdge_dist/right_length)*180/np.pi
         if j_A < j_D:  # negative angle
             angleRTE *= -1
 
@@ -364,7 +368,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     box = (leftThreshold, upperThreshold, rightThreshold,
            lowerThreshold)  # left upper right lower
     white = (255, 255, 255)
-    imagePIL = imagePIL.rotate(-sum(angles)/len(angles),
+    imagePIL = imagePIL.rotate(-min(angles),
                                fillcolor=white).crop(box)
     imageGPIL = imagePIL.convert('L')
 
@@ -392,7 +396,8 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
     box = (2800-172-50-60, 2800-172-50-600, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
-    numImagePIL.save('./processed/'+seriesName+'/'+imgName.split('.')[0]+'_d.jpg')
+    numImagePIL.save('./processed/'+seriesName+'/' +
+                     imgName.split('.')[0].split('_')[1]+'.jpg')
     return newImage
 
 
@@ -421,7 +426,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL.paste(image3PIL, box3)
     newImagePIL.paste(image4PIL, box4)
     newImagePIL.paste(signaturePIL, boxs)
-    newImagePIL.save('./processed/'+seriesName+'/'+seriesName+'_d.jpg')
+    newImagePIL.save('./processed/'+seriesName+'/'+seriesName+'.jpg')
 
 
 instaPrep(seriesName)

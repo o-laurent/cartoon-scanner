@@ -1,11 +1,13 @@
 #   moyenne des traits du bord, min et max, noircir le trait à fond
-#   Baisser la signature
 #   gérer 2,3 images
 #   gérer les hors cadre
 #   simplifier les noms des images
 #   Mettre les images de to_process dans le dossier
+# verbose mode 
+# comments
 
-# load and show an image with Pillow
+
+# load images with Pillow
 from PIL import Image
 import numpy as np
 from imageTools import sharpenImage, post_process

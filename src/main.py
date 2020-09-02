@@ -1,8 +1,9 @@
 #   moyenne des traits du bord, min et max, noircir le trait à fond
 #   Baisser la signature
-# gérer 2,3 images
-# gérer les hors cadre
-
+#   gérer 2,3 images
+#   gérer les hors cadre
+#   simplifier les noms des images
+#   Mettre les images de to_process dans le dossier
 
 # load and show an image with Pillow
 from PIL import Image
@@ -371,15 +372,15 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     height = imagePIL.size[1]
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
-    newImage = np.zeros((2800, 2800, 3))
+    newImage = np.ones((2800, 2800, 3))*255
 
     sX = height/2800
     sY = width/2800
 
     # Build the new image
 
-    for x in range(2800):
-        for y in range(2800):
+    for x in range(150, 2650):
+        for y in range(150, 2650):
             color = image[int(transX(sX, x))][int(transY(sY, y))]
             if not isWhite(color):
                 newImage[x][y] = color
@@ -420,7 +421,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL.paste(image3PIL, box3)
     newImagePIL.paste(image4PIL, box4)
     newImagePIL.paste(signaturePIL, boxs)
-    newImagePIL.save('./processed/'+seriesName+'_d.jpg')
+    newImagePIL.save('./processed/'+seriesName+'/'+seriesName+'_d.jpg')
 
 
 instaPrep(seriesName)

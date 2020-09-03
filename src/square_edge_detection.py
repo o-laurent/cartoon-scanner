@@ -35,122 +35,6 @@ def isCorner(image, i, j):
     return boolean
 
 
-"""imagePIL = Image.open(imgName)
-imageGPIL = imagePIL.convert('L')
-
-# get the size of the image
-width = imagePIL.size[0]
-height = imagePIL.size[1]
-
-# matrixize and sharpen the image
-#image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
-image = np.array(imagePIL)
-# find the real dimensions 
-# on commence par le haut au milieu, on cherche le premier pixel noir 
-found = False 
-mid = width//2
-maxI = 0
-i = 100
-while not found and i < height:
-    if isBlack(image[i][mid]):
-        j = -round(width/40)
-        stop = False
-        while not stop and j<round(width/40):
-            foundJ = False 
-            varI = -round(height/50)
-            while not foundJ and varI < round(height/50):
-                foundJ = isBlack(image[i+varI][mid+j])
-                varI += 1
-            stop = not foundJ #si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-            if foundJ:
-                maxI = i
-            j += 1
-        if not stop:
-            found = True
-    i += 1
-
-upperThreshold = maxI - 172
-print('upper : '+str(maxI))
-
-found = False
-maxI = 0
-i = height - 101
-while not found and i > upperThreshold + 100:
-    if isBlack(image[i][mid]):
-        j = -round(width/40)
-        stop = False
-        while not stop and j<round(width/40):
-            foundJ = False 
-            varI = -round(height/50)
-            while not foundJ and varI < round(height/50):
-                foundJ = isBlack(image[i+varI][mid+j])
-                varI += 1
-            stop = not foundJ #si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-            if foundJ:
-                maxI = i
-            j += 1
-        if not stop:
-            found = True
-    i -= 1
-
-lowerThreshold = maxI + 172
-print('lower : '+str(maxI))
-
-found = False
-mid = height//2
-maxJ = 0
-j = 100
-while not found and j < width:
-    if isBlack(image[mid][j]):
-        i = -round(height/40)
-        stop = False
-        while not stop and i<round(height/40):
-            foundI = False 
-            varJ = -round(width/50)
-            while not foundI and varJ < round(width/50):
-                foundI = isBlack(image[mid+i][j+varJ])
-                varJ += 1
-            stop = not foundI #si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-            if stop:
-                print('missed')
-                print(mid+i)
-            if foundI:
-                maxJ = j
-            i += 1
-        if not stop:
-            found = True
-    j += 1
-
-leftThreshold = maxJ - 172
-print('left : '+str(maxJ))
-
-found = False
-maxJ = 0
-j = width-101
-while not found and j > leftThreshold + 100:
-    if isBlack(image[mid][j]):
-        i = -round(height/40)
-        stop = False
-        while not stop and i<round(height/40):
-            foundI = False 
-            varJ = -round(width/50)
-            while not foundI and varJ < round(width/50):
-                foundI = isBlack(image[mid+i][j+varJ])
-                varJ += 1
-            stop = not foundI #si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-            if stop:
-                print('missed')
-                print(mid+i)
-            if foundI:
-                maxJ = j
-            i += 1
-        if not stop:
-            found = True
-    j -= 1
-
-rightThreshold = maxJ + 172
-print('right : '+str(maxJ))"""
-
 # Coin supérieur gauche
 
 
@@ -160,8 +44,11 @@ def left_top_edge(image, upperThreshold, width):
     j = width//2
     corner = False
     while not corner:
-        while isBlack(image[i][j]):
+        while isBlack(image[i][j]) and j > 0:
             j -= 1
+        if j == 0:
+            print('Error')
+            corner = True
         up = 0
         for varI in range(1, 11):
             up += int(isBlack(image[i-varI][j]))
@@ -181,8 +68,8 @@ def left_top_edge(image, upperThreshold, width):
             i -= up//2
         else:
             i += down//2
-    print(i, j-1)
-    return [i, j-1]
+        j -= 1  # if we are in a hole, just move a little
+    return [i, j]
 
 # Coin supérieur droit
 
@@ -214,8 +101,8 @@ def right_top_edge(image, upperThreshold, width):
             i -= up//2
         else:
             i += down//2
-    print(i, j+1)
-    return [i, j+1]
+        j += 1
+    return [i, j]
 
 # Coin inférieur gauche
 
@@ -247,8 +134,8 @@ def left_low_edge(image, lowerThreshold, width):
             i -= up//2
         else:
             i += down//2
-    print(i, j-1)
-    return [i, j-1]
+        j -= 1
+    return [i, j]
 
 # Coin inférieur droit
 
@@ -280,8 +167,8 @@ def right_low_edge(image, lowerThreshold, width):
             i -= up//2
         else:
             i += down//2
-    print(i, j+1)
-    return [i, j+1]
+        j += 1
+    return [i, j]
 
 
 def intersection_right(image, width, leftLowEdge, lower_length):

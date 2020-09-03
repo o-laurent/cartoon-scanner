@@ -5,6 +5,7 @@
 # comments
 # save steps GUI selectable
 # propose choices
+#ne pas tout retransformer en jpg si ça l'est déjà
 
 # load images with Pillow
 from PIL import Image
@@ -516,7 +517,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     # print(dst)
     tform = tf.ProjectiveTransform()
     tform.estimate(src, dst)
-    image = tf.warp(image/255, tform, output_shape=(2800, 2800))*255
+    image = tf.warp(image/255, tform, output_shape=(2800, 2800), cval=1)*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
     # imagePIL.save('./processed/'+seriesName+'/' +
@@ -527,26 +528,21 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     height = imagePIL.size[1]
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
-    newImage = np.ones((2800, 2800, 3))*255
+    #newImage = np.ones((2800, 2800, 3))*255
 
     # Build the new image
 
-    for x in range(150, 2650):
-        for y in range(150, 2650):
-            color = image[x][y]
-            if not isWhite(color):
-                newImage[x][y] = color
-            else:
-                newImage[x][y] = [255, 255, 255]
-    newImage = post_process(newImage)
-    numImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
+    image[image[:,:,0]+image[:,:,1]+image[:,:,2]>500] = [255, 255, 255]
+    image = post_process(image)
+
+    numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
 
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
     numImagePIL.save('./processed/'+seriesName+'/' +
                      imgName.split('.')[0].split('_')[1]+'.jpg')
-    return newImage
+    return image
 
 
 def merge4(seriesName, image1, image2, image3, image4):
@@ -567,7 +563,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
 
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
-    boxs = (2800-115-50-50, 2800-115-600-10, 2800-115-25, 2800-115-10)
+    boxs = (2800-115-50-50, 2800-115-505-10, 2800-115-25, 2800-115-10)
 
     newImagePIL.paste(image1PIL, box1)
     newImagePIL.paste(image2PIL, box2)

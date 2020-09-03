@@ -5,7 +5,7 @@
 # comments
 # save steps GUI selectable
 # propose choices
-#ne pas tout retransformer en jpg si ça l'est déjà
+# ne pas tout retransformer en jpg si ça l'est déjà
 
 # load images with Pillow
 from PIL import Image
@@ -21,10 +21,16 @@ from os.path import isfile, join
 # Get the name of the series
 
 from gui import graphical_user_interface
-seriesName = ''
-possibility = listdir('./to_process/')[0].split('_')[0]
-while seriesName == '':
-    seriesName = graphical_user_interface(possibility)
+series_name = ''
+file_names = listdir('./to_process/')
+file_names = list(set(map(lambda x: x.split('_')[0], file_names)))
+
+if len(file_names) >= 1:
+    while series_name == '':
+        series_name = graphical_user_interface(file_names)
+else: 
+    print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier 'processed'")
+
 
 
 def isBlack(arr):
@@ -45,18 +51,18 @@ def transY(sY, y):
     return y*sY
 
 
-def instaPrep(seriesName: str):
+def instaPrep(series_name: str):
     # Load list of files
     file_list = [f for f in listdir('./to_process/')]
     print(file_list)
-    file_list = [f for f in file_list if f.split('.')[1].lower() == 'jpg' and f.split('_')[0] == seriesName and f.split(
+    file_list = [f for f in file_list if f.split('.')[1].lower() == 'jpg' and f.split('_')[0] == series_name and f.split(
         '_')[-1].split('.')[0] != 'd' and (f.split('.')[0]+'_d.'+f.split('.')[1] not in file_list)]
     file_list = list(map(lambda x: x.split('.')[0], file_list))
     file_list.sort()
     nb = len(file_list)
 
     src_path = './to_process/'
-    out_path = './processed/'+seriesName+'/'
+    out_path = './processed/'+series_name+'/'
     try:
         mkdir(out_path)
     except OSError:
@@ -69,14 +75,14 @@ def instaPrep(seriesName: str):
 
     if nb == 1:
         print('1 photo à traiter')
-        digitalizeImage(seriesName, seriesName+'_1.jpg')
+        digitalizeImage(series_name, series_name+'_1.jpg')
 
     if nb == 2:
         print('2 photos à traiter')
         # digitalize separately
         for i in range(1, 3):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg')
 
     if nb == 3:
         print('3 photos à traiter')
@@ -84,7 +90,7 @@ def instaPrep(seriesName: str):
         # digitalize separately
         for i in range(1, 4):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg')
+            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg')
 
     if nb == 4:
         print('4 photos à traiter')
@@ -93,15 +99,15 @@ def instaPrep(seriesName: str):
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
             images.append(
-                digitalizeImage(seriesName, seriesName+'_'+str(i)+'.jpg', True))
+                digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', True))
         # Merge
-        merge4(seriesName, images[0], images[1], images[2], images[3])
+        merge4(series_name, images[0], images[1], images[2], images[3])
     for i in range(nb):
-        rename(src_path+seriesName+'_'+str(i+1)+'.jpg',
-               out_path+seriesName+'_'+str(i+1)+'.jpg')
+        rename(src_path+series_name+'_'+str(i+1)+'.jpg',
+               out_path+series_name+'_'+str(i+1)+'.jpg')
 
 
-def digitalizeImage(seriesName, imgName, ROTATION=True):
+def digitalizeImage(series_name, imgName, ROTATION=True):
     if ROTATION:
         print('Tentative de rotation')
     # Open the image form working directory
@@ -490,7 +496,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         j -= 1
     rightThreshold = maxJ + 172
 
-    # imagePIL.save('./processed/'+seriesName+'/' +
+    # imagePIL.save('./processed/'+series_name+'/' +
     #              imgName.split('.')[0].split('_')[1]+'_bt.jpg')
 
     # print(leftThreshold)
@@ -520,7 +526,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     image = tf.warp(image/255, tform, output_shape=(2800, 2800), cval=1)*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
-    # imagePIL.save('./processed/'+seriesName+'/' +
+    # imagePIL.save('./processed/'+series_name+'/' +
     #              imgName.split('.')[0].split('_')[1]+'_t.jpg')
     imageGPIL = imagePIL.convert('L')
 
@@ -532,7 +538,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
 
     # Build the new image
 
-    image[image[:,:,0]+image[:,:,1]+image[:,:,2]>500] = [255, 255, 255]
+    image[image[:, :, 0]+image[:, :, 1]+image[:, :, 2] > 500] = [255, 255, 255]
     image = post_process(image)
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
@@ -540,12 +546,12 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
-    numImagePIL.save('./processed/'+seriesName+'/' +
+    numImagePIL.save('./processed/'+series_name+'/' +
                      imgName.split('.')[0].split('_')[1]+'.jpg')
     return image
 
 
-def merge4(seriesName, image1, image2, image3, image4):
+def merge4(series_name, image1, image2, image3, image4):
     print('Assemblage')
     box1 = (95, 95, 1363, 1363)  # include centering (172/2=86)
     box2 = (1437, 95, 2705, 1363)
@@ -570,7 +576,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImagePIL.paste(image3PIL, box3)
     newImagePIL.paste(image4PIL, box4)
     newImagePIL.paste(signaturePIL, boxs)
-    newImagePIL.save('./processed/'+seriesName+'/'+seriesName+'.jpg')
+    newImagePIL.save('./processed/'+series_name+'/'+series_name+'.jpg')
 
 
-instaPrep(seriesName)
+instaPrep(series_name)

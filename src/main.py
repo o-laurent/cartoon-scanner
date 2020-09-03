@@ -1,10 +1,10 @@
 #   moyenne des traits du bord, min et max, noircir le trait à fond
 #   gérer 2,3 images
 #   Mettre les images de to_process dans le dossier
-# verbose mode
+# verbose mode GUI selectable
 # comments
-# save steps
-# propose choices 
+# save steps GUI selectable
+# propose choices
 
 # load images with Pillow
 from PIL import Image
@@ -258,12 +258,12 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         right_intersection = [i_A, j_A-b/a]
         rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (
             right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
-        print(i_A, i_D)
+        #print(i_A, i_D)
         angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
         if i_A < i_D:  # negative angle
             angleRLE *= -1
 
-        print('Lower angle: ' + str(angleRLE))
+        #print('Lower angle: ' + str(angleRLE))
 
         # Left Top Edge Angle
 
@@ -291,7 +291,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         if i_A > i_D:  # negative angle
             angleLTE *= -1
 
-        print('upper angle: '+str(angleLTE))
+        #print('upper angle: '+str(angleLTE))
 
         # Left Lower Edge Angle
         i_A = leftTopEdge[0]
@@ -316,7 +316,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         if j_A > j_D:  # negative angle
             angleLLE *= -1
 
-        print('left angle: '+str(angleLLE))
+        #print('left angle: '+str(angleLLE))
 
         # Right Lower Edge Angle
         i_A = rightLowerEdge[0]
@@ -341,7 +341,7 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         if j_A < j_D:  # negative angle
             angleRTE *= -1
 
-        print('right angle: '+str(angleRTE))
+        #print('right angle: '+str(angleRTE))
 
     else:
         angleRLE = 0
@@ -371,12 +371,12 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         rotation_angle = - sum(angles)/len(angles)
 
     # Crop and sharpen the image
-    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+170)-170
+    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-172
     rightBorder = max(rightLowerEdge[1],
-                      rightTopEdge[1], rightThreshold-170)+170
-    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+170)-170
+                      rightTopEdge[1], rightThreshold-172)+172
+    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+172)-172
     lowerBorder = max(leftLowerEdge[0],
-                      rightLowerEdge[0], lowerThreshold-170)+170
+                      rightLowerEdge[0], lowerThreshold-172)+172
 
     box = (leftBorder, upperBorder, rightBorder,
            lowerBorder)  # left upper right lower
@@ -489,13 +489,13 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
         j -= 1
     rightThreshold = maxJ + 172
 
-    #imagePIL.save('./processed/'+seriesName+'/' +
+    # imagePIL.save('./processed/'+seriesName+'/' +
     #              imgName.split('.')[0].split('_')[1]+'_bt.jpg')
 
-    #print(leftThreshold)
-    #print(rightThreshold)
-    #print(upperThreshold)
-    #print(lowerThreshold)
+    # print(leftThreshold)
+    # print(rightThreshold)
+    # print(upperThreshold)
+    # print(lowerThreshold)
 
     leftTopEdge = left_top_edge(image, upperThreshold, 2800)
     rightTopEdge = right_top_edge(image, upperThreshold, 2800)
@@ -507,20 +507,19 @@ def digitalizeImage(seriesName, imgName, ROTATION=True):
     # print(rightLowerEdge)
     # print(leftLowerEdge)
 
-    
     image = np.array(imagePIL)
     dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
                     rightLowerEdge[::-1], leftLowerEdge[::-1]])
     src = np.array([[170, 170][::-1], [170, 2630][::-1],
                     [2630, 2630][::-1], [2630, 170][::-1]])
-    #print(src)
-    #print(dst)
+    # print(src)
+    # print(dst)
     tform = tf.ProjectiveTransform()
     tform.estimate(src, dst)
     image = tf.warp(image/255, tform, output_shape=(2800, 2800))*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
-    #imagePIL.save('./processed/'+seriesName+'/' +
+    # imagePIL.save('./processed/'+seriesName+'/' +
     #              imgName.split('.')[0].split('_')[1]+'_t.jpg')
     imageGPIL = imagePIL.convert('L')
 
@@ -567,7 +566,7 @@ def merge4(seriesName, image1, image2, image3, image4):
     newImage = np.ones((2800, 2800, 3))*255
     newImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
 
-    signaturePIL = Image.open('./signature/signature.jpg').resize((75, 600))
+    signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
     boxs = (2800-115-50-50, 2800-115-600-10, 2800-115-25, 2800-115-10)
 
     newImagePIL.paste(image1PIL, box1)

@@ -4,12 +4,14 @@
 
 The first time you use this software, please type on your terminal
 
-`bash prepare`
+`./prepare`
 
 ## How to use the software
 
 To digitalize a cartoon, put all your files in the directory "./to_process".
 
-Then type `bash scanMyCartoon`.
+Then type 
+
+`./scanMyCartoon`.
 
 The processed files will be found in "./processed" in a separate directory.

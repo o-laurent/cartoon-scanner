@@ -1,6 +1,5 @@
 #   gérer 2,3 images
 # comments
-# save steps GUI selectable
 # ne pas tout retransformer en jpg si ça l'est déjà
 
 # load images with Pillow
@@ -25,10 +24,10 @@ file_names = list(set(map(lambda x: x.split('_')[0], file_names)))
 
 if len(file_names) >= 1:
     while series_name == '':
-        series_name = graphical_user_interface(file_names)
-else: 
+        series_name, rotation, perspective_correction, verbose, steps = graphical_user_interface(
+            file_names)
+else:
     print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier 'processed'")
-
 
 
 def isBlack(arr):
@@ -41,7 +40,7 @@ def isWhite(arr):
     return (var > 500)
 
 
-def instaPrep(series_name: str):
+def instaPrep(series_name: str, rotation=True, perspective_correction=True, verbose=False, steps=False):
     """
     Function which prepares the different cartoons according to the situation.
     """
@@ -69,14 +68,16 @@ def instaPrep(series_name: str):
 
     if nb == 1:
         print('1 photo à traiter')
-        digitalizeImage(series_name, series_name+'_1.jpg')
+        digitalizeImage(series_name, series_name+'_1.jpg',
+                        rotation, perspective_correction, verbose, steps)
 
     if nb == 2:
         print('2 photos à traiter')
         # digitalize separately
         for i in range(1, 3):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg')
+            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg',
+                            rotation, perspective_correction, verbose, steps)
 
     if nb == 3:
         print('3 photos à traiter')
@@ -84,7 +85,8 @@ def instaPrep(series_name: str):
         # digitalize separately
         for i in range(1, 4):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
-            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg')
+            digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg',
+                            rotation, perspective_correction, verbose, steps)
 
     if nb == 4:
         print('4 photos à traiter')
@@ -93,7 +95,7 @@ def instaPrep(series_name: str):
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
             images.append(
-                digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', True))
+                digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', rotation, perspective_correction, verbose, steps))
         # Merge
         merge4(series_name, images[0], images[1], images[2], images[3])
     for i in range(nb):
@@ -119,7 +121,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
     Output: 
         - image: (np.array((2800, 2800))) "digitalized" image    
-    
+
     """
     if rotation:
         print('Tentative de rotation')
@@ -278,7 +280,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
     if verbose:
         print('angles: '+str(angles))
-        
+
     rotation_angle = 0
     meanLLE = angleLTE/3 + angleRLE/3 + angleRTE/3
     meanLTE = angleLLE/3 + angleRLE/3 + angleRTE/3
@@ -319,143 +321,145 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     width = 2800
     height = 2800
 
-# find the square
-    # on commence par le haut au milieu, on cherche le premier pixel noir
-    found = False
-    mid = width//2
-    maxI = 0
-    i = 150
-    while not found and i < height - 150:
-        if isBlack(image[i][mid]):
-            j = -round(width/40)
-            stop = False
-            while not stop and j < round(width/40):
-                foundJ = False
-                varI = -round(height/50)
-                while not foundJ and varI < round(height/50):
-                    foundJ = isBlack(image[i+varI][mid+j])
-                    varI += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundJ
-                if foundJ:
-                    maxI = i
-                j += 1
-            if not stop:
-                found = True
-        i += 1
+    if perspective_correction():
+        # find the square
+        # on commence par le haut au milieu, on cherche le premier pixel noir
+        found = False
+        mid = width//2
+        maxI = 0
+        i = 150
+        while not found and i < height - 150:
+            if isBlack(image[i][mid]):
+                j = -round(width/40)
+                stop = False
+                while not stop and j < round(width/40):
+                    foundJ = False
+                    varI = -round(height/50)
+                    while not foundJ and varI < round(height/50):
+                        foundJ = isBlack(image[i+varI][mid+j])
+                        varI += 1
+                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                    stop = not foundJ
+                    if foundJ:
+                        maxI = i
+                    j += 1
+                if not stop:
+                    found = True
+            i += 1
 
-    upperThreshold = maxI-172
+        upperThreshold = maxI-172
 
-    found = False
-    maxI = 0
-    i = height - 150
-    while not found and i > upperThreshold + 150:
-        if isBlack(image[i][mid]):
-            j = -round(width/40)
-            stop = False
-            while not stop and j < round(width/40):
-                foundJ = False
-                varI = -round(height/50)
-                while not foundJ and varI < round(height/50):
-                    foundJ = isBlack(image[i+varI][mid+j])
-                    varI += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundJ
-                if foundJ:
-                    maxI = i
-                j += 1
-            if not stop:
-                found = True
-        i -= 1
-    lowerThreshold = maxI + 172
+        found = False
+        maxI = 0
+        i = height - 150
+        while not found and i > upperThreshold + 150:
+            if isBlack(image[i][mid]):
+                j = -round(width/40)
+                stop = False
+                while not stop and j < round(width/40):
+                    foundJ = False
+                    varI = -round(height/50)
+                    while not foundJ and varI < round(height/50):
+                        foundJ = isBlack(image[i+varI][mid+j])
+                        varI += 1
+                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                    stop = not foundJ
+                    if foundJ:
+                        maxI = i
+                    j += 1
+                if not stop:
+                    found = True
+            i -= 1
+        lowerThreshold = maxI + 172
 
-    found = False
-    mid = height//2
-    maxJ = 0
-    j = 150
-    while not found and j < width-150:
-        if isBlack(image[mid][j]):
-            #print(mid, j)
-            i = -round(height/40)
-            stop = False
-            while not stop and i < round(height/40):
-                foundI = False
-                varJ = -round(width/50)
-                while not foundI and varJ < round(width/50):
-                    foundI = isBlack(image[mid+i][j+varJ])
-                    #print(i+mid,j+varJ,foundI, image[mid+i][j+varJ])
-                    varJ += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundI
-                # print(stop)
-                if foundI:
-                    maxJ = j
-                i += 1
-            if not stop:
-                found = True
-        j += 1
-    leftThreshold = maxJ - 172
+        found = False
+        mid = height//2
+        maxJ = 0
+        j = 150
+        while not found and j < width-150:
+            if isBlack(image[mid][j]):
+                #print(mid, j)
+                i = -round(height/40)
+                stop = False
+                while not stop and i < round(height/40):
+                    foundI = False
+                    varJ = -round(width/50)
+                    while not foundI and varJ < round(width/50):
+                        foundI = isBlack(image[mid+i][j+varJ])
+                        #print(i+mid,j+varJ,foundI, image[mid+i][j+varJ])
+                        varJ += 1
+                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                    stop = not foundI
+                    # print(stop)
+                    if foundI:
+                        maxJ = j
+                    i += 1
+                if not stop:
+                    found = True
+            j += 1
+        leftThreshold = maxJ - 172
 
-    found = False
-    maxJ = 0
-    j = width-101
-    while not found and j > leftThreshold + 100:
-        if isBlack(image[mid][j]):
-            i = -round(height/40)
-            stop = False
-            while not stop and i < round(height/40):
-                foundI = False
-                varJ = -round(width/50)
-                while not foundI and varJ < round(width/50):
-                    foundI = isBlack(image[mid+i][j+varJ])
-                    varJ += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundI
-                if foundI:
-                    maxJ = j
-                i += 1
-            if not stop:
-                found = True
-        j -= 1
-    rightThreshold = maxJ + 172
+        found = False
+        maxJ = 0
+        j = width-101
+        while not found and j > leftThreshold + 100:
+            if isBlack(image[mid][j]):
+                i = -round(height/40)
+                stop = False
+                while not stop and i < round(height/40):
+                    foundI = False
+                    varJ = -round(width/50)
+                    while not foundI and varJ < round(width/50):
+                        foundI = isBlack(image[mid+i][j+varJ])
+                        varJ += 1
+                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                    stop = not foundI
+                    if foundI:
+                        maxJ = j
+                    i += 1
+                if not stop:
+                    found = True
+            j -= 1
+        rightThreshold = maxJ + 172
 
-    # imagePIL.save('./processed/'+series_name+'/' +
-    #              imgName.split('.')[0].split('_')[1]+'_bt.jpg')
+        # imagePIL.save('./processed/'+series_name+'/' +
+        #              imgName.split('.')[0].split('_')[1]+'_bt.jpg')
 
-    # print(leftThreshold)
-    # print(rightThreshold)
-    # print(upperThreshold)
-    # print(lowerThreshold)
+        # print(leftThreshold)
+        # print(rightThreshold)
+        # print(upperThreshold)
+        # print(lowerThreshold)
 
-    leftTopEdge = left_top_edge(image, upperThreshold, 2800)
-    rightTopEdge = right_top_edge(image, upperThreshold, 2800)
-    rightLowerEdge = right_low_edge(image, lowerThreshold, 2800)
-    leftLowerEdge = left_low_edge(image, lowerThreshold, 2800)
+        leftTopEdge = left_top_edge(image, upperThreshold, 2800)
+        rightTopEdge = right_top_edge(image, upperThreshold, 2800)
+        rightLowerEdge = right_low_edge(image, lowerThreshold, 2800)
+        leftLowerEdge = left_low_edge(image, lowerThreshold, 2800)
 
-    # print(leftTopEdge)
-    # print(rightTopEdge)
-    # print(rightLowerEdge)
-    # print(leftLowerEdge)
+        # print(leftTopEdge)
+        # print(rightTopEdge)
+        # print(rightLowerEdge)
+        # print(leftLowerEdge)
 
-    image = np.array(imagePIL)
-    dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
-                    rightLowerEdge[::-1], leftLowerEdge[::-1]])
-    src = np.array([[170, 170][::-1], [170, 2630][::-1],
-                    [2630, 2630][::-1], [2630, 170][::-1]])
-    
-    if verbose:
-        print('Points réels: '+ str(dst))
-        print('Points théoriques: '+str(src))
-    
-    tform = tf.ProjectiveTransform()
-    tform.estimate(src, dst)
-    image = tf.warp(image/255, tform, output_shape=(2800, 2800), cval=1)*255
+        image = np.array(imagePIL)
+        dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
+                        rightLowerEdge[::-1], leftLowerEdge[::-1]])
+        src = np.array([[170, 170][::-1], [170, 2630][::-1],
+                        [2630, 2630][::-1], [2630, 170][::-1]])
+
+        if verbose:
+            print('Points réels:\n' + str(dst))
+            print('Points théoriques:\n' + str(src))
+
+        tform = tf.ProjectiveTransform()
+        tform.estimate(src, dst)
+        image = tf.warp(image/255, tform,
+                        output_shape=(2800, 2800), cval=1)*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
 
     if steps:
         imagePIL.save('./processed/'+series_name+'/' +
-                    imgName.split('.')[0].split('_')[1]+'_t.jpg')
+                      imgName.split('.')[0].split('_')[1]+'_t.jpg')
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]
@@ -469,7 +473,8 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
 
-    signaturePIL = Image.open('./src/signature/signature.jpg').resize((75, 505))
+    signaturePIL = Image.open(
+        './src/signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
     numImagePIL.save('./processed/'+series_name+'/' +
@@ -494,7 +499,8 @@ def merge4(series_name, image1, image2, image3, image4):
     newImage = np.ones((2800, 2800, 3))*255
     newImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
 
-    signaturePIL = Image.open('./src/signature/signature.jpg').resize((75, 505))
+    signaturePIL = Image.open(
+        './src/signature/signature.jpg').resize((75, 505))
     boxs = (2800-115-50-50, 2800-115-505-10, 2800-115-25, 2800-115-10)
 
     newImagePIL.paste(image1PIL, box1)
@@ -505,4 +511,4 @@ def merge4(series_name, image1, image2, image3, image4):
     newImagePIL.save('./processed/'+series_name+'/'+series_name+'.jpg')
 
 
-instaPrep(series_name)
+instaPrep(series_name, rotation, perspective_correction, verbose, steps)

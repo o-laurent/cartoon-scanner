@@ -1,4 +1,8 @@
-# load and show an image with Pillow
+"""
+Module containing all the useful functions to determine the borders 
+        and edges of the external square of the drawing
+"""
+
 from PIL import Image
 import numpy as np
 from imageTools import sharpenImage
@@ -6,6 +10,8 @@ from imageTools import sharpenImage
 # to load the list of files
 from os import listdir
 from os.path import isfile, join
+
+# Utility functions
 
 
 def isBlack(arr):
@@ -35,9 +41,121 @@ def isCorner(image, i, j):
     return boolean
 
 
+# Border determination functions
+def upper_threshold(image, height: int, width: int):
+    # find the square
+    # on commence par le haut au milieu, on cherche le premier pixel noir
+    found = False
+    mid = width//2
+    maxI = 0
+    i = 100
+    while not found and i < height:
+        if isBlack(image[i][mid]):
+            j = -round(width/40)
+            stop = False
+            while not stop and j < round(width/40):
+                foundJ = False
+                varI = -round(height/50)
+                while not foundJ and varI < round(height/50):
+                    foundJ = isBlack(image[i+varI][mid+j])
+                    varI += 1
+                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                stop = not foundJ
+                if foundJ:
+                    maxI = i
+                j += 1
+            if not stop:
+                found = True
+        i += 1
+    return maxI - 172
+
+
+def lower_threshold(image, upperThreshold, height, width):
+    found = False
+    mid = width//2
+    maxI = 0
+    i = height - 101
+    while not found and i > upperThreshold + 100:
+        if isBlack(image[i][mid]):
+            j = -round(width/40)
+            stop = False
+            while not stop and j < round(width/40):
+                foundJ = False
+                varI = -round(height/50)
+                while not foundJ and varI < round(height/50):
+                    foundJ = isBlack(image[i+varI][mid+j])
+                    varI += 1
+                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                stop = not foundJ
+                if foundJ:
+                    maxI = i
+                j += 1
+            if not stop:
+                found = True
+        i -= 1
+    return maxI + 172
+
+
+def left_threshold(image, height, width):
+    found = False
+    mid = height//2
+    maxJ = 0
+    j = 100
+    while not found and j < width:
+        if isBlack(image[mid][j]):
+            i = -round(height/40)
+            stop = False
+            while not stop and i < round(height/40):
+                foundI = False
+                varJ = -round(width/50)
+                while not foundI and varJ < round(width/50):
+                    foundI = isBlack(image[mid+i][j+varJ])
+                    varJ += 1
+                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                stop = not foundI
+                if stop:
+                    print('missed')
+                    print(mid+i)
+                if foundI:
+                    maxJ = j
+                i += 1
+            if not stop:
+                found = True
+        j += 1
+    return maxJ - 172
+
+
+def right_threshold(image, leftThreshold, height, width):
+    found = False
+    mid = height//2
+    maxJ = 0
+    j = width-101
+    while not found and j > leftThreshold + 100:
+        if isBlack(image[mid][j]):
+            i = -round(height/40)
+            stop = False
+            while not stop and i < round(height/40):
+                foundI = False
+                varJ = -round(width/50)
+                while not foundI and varJ < round(width/50):
+                    foundI = isBlack(image[mid+i][j+varJ])
+                    varJ += 1
+                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
+                stop = not foundI
+                if stop:
+                    print('missed')
+                    print(mid+i)
+                if foundI:
+                    maxJ = j
+                i += 1
+            if not stop:
+                found = True
+        j -= 1
+    return maxJ + 172
+
+
+# Square Edge determination functions
 # Coin supérieur gauche
-
-
 def left_top_edge(image, upperThreshold, width):
     """ runs along the cartoon strokes to find the left top edge """
     i = upperThreshold + 172

@@ -1,9 +1,6 @@
 #   gérer 2,3 images
-#   Mettre les images de to_process dans le dossier
-# verbose mode GUI selectable
 # comments
 # save steps GUI selectable
-# propose choices
 # ne pas tout retransformer en jpg si ça l'est déjà
 
 # load images with Pillow
@@ -11,7 +8,9 @@ from PIL import Image
 import numpy as np
 from imageTools import sharpenImage, post_process
 from skimage import transform as tf
-from square_edge_detection import left_low_edge, left_top_edge, right_low_edge, right_top_edge, intersection_right
+
+from square_edge_detection import upper_threshold, lower_threshold, left_threshold, right_threshold
+from square_edge_detection import left_low_edge, left_top_edge, right_low_edge, right_top_edge
 
 # to load the list of files
 from os import listdir, mkdir, getcwd, rename
@@ -42,15 +41,11 @@ def isWhite(arr):
     return (var > 500)
 
 
-def transX(sX, x):
-    return x*sX
-
-
-def transY(sY, y):
-    return y*sY
-
-
 def instaPrep(series_name: str):
+    """
+    Function which prepares the different cartoons according to the situation.
+    """
+
     # Load list of files
     file_list = [f for f in listdir('./to_process/')]
     print(file_list)
@@ -106,8 +101,27 @@ def instaPrep(series_name: str):
                out_path+series_name+'_'+str(i+1)+'.jpg')
 
 
-def digitalizeImage(series_name, imgName, ROTATION=True):
-    if ROTATION:
+def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=True, verbose=False, steps=False):
+    """
+    Function which prepares a cartoon doing the following steps:
+        - finding the borders and edges and cropping with a 172pix padding
+        - finding if the image is rotated and to which angle, and rotating it back
+        - correcting the perspective effects
+        - applying a "digitalizing" filter to the image
+
+    Input:
+        - series_name: (str) name of the cartoon series
+        - imgName: (str) number of the image in the series
+        - rotation: (bool) indicates if a rotation will be applied
+        - perpective_correction: (bool) 
+        - verbose: (bool) 
+        - steps: (bool)
+
+    Output: 
+        - image: (np.array((2800, 2800))) "digitalized" image    
+    
+    """
+    if rotation:
         print('Tentative de rotation')
     # Open the image form working directory
     imagePIL = Image.open('./to_process/'+imgName)
@@ -120,108 +134,10 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
     # matrixize and sharpen the image
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
-    # find the square
-    # on commence par le haut au milieu, on cherche le premier pixel noir
-    found = False
-    mid = width//2
-    maxI = 0
-    i = 100
-    while not found and i < height:
-        if isBlack(image[i][mid]):
-            j = -round(width/40)
-            stop = False
-            while not stop and j < round(width/40):
-                foundJ = False
-                varI = -round(height/50)
-                while not foundJ and varI < round(height/50):
-                    foundJ = isBlack(image[i+varI][mid+j])
-                    varI += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundJ
-                if foundJ:
-                    maxI = i
-                j += 1
-            if not stop:
-                found = True
-        i += 1
-
-    upperThreshold = maxI - 172
-
-    found = False
-    maxI = 0
-    i = height - 101
-    while not found and i > upperThreshold + 100:
-        if isBlack(image[i][mid]):
-            j = -round(width/40)
-            stop = False
-            while not stop and j < round(width/40):
-                foundJ = False
-                varI = -round(height/50)
-                while not foundJ and varI < round(height/50):
-                    foundJ = isBlack(image[i+varI][mid+j])
-                    varI += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundJ
-                if foundJ:
-                    maxI = i
-                j += 1
-            if not stop:
-                found = True
-        i -= 1
-    lowerThreshold = maxI + 172
-
-    found = False
-    mid = height//2
-    maxJ = 0
-    j = 100
-    while not found and j < width:
-        if isBlack(image[mid][j]):
-            i = -round(height/40)
-            stop = False
-            while not stop and i < round(height/40):
-                foundI = False
-                varJ = -round(width/50)
-                while not foundI and varJ < round(width/50):
-                    foundI = isBlack(image[mid+i][j+varJ])
-                    varJ += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundI
-                if stop:
-                    print('missed')
-                    print(mid+i)
-                if foundI:
-                    maxJ = j
-                i += 1
-            if not stop:
-                found = True
-        j += 1
-    leftThreshold = maxJ - 172
-
-    found = False
-    maxJ = 0
-    j = width-101
-    while not found and j > leftThreshold + 100:
-        if isBlack(image[mid][j]):
-            i = -round(height/40)
-            stop = False
-            while not stop and i < round(height/40):
-                foundI = False
-                varJ = -round(width/50)
-                while not foundI and varJ < round(width/50):
-                    foundI = isBlack(image[mid+i][j+varJ])
-                    varJ += 1
-                # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                stop = not foundI
-                if stop:
-                    print('missed')
-                    print(mid+i)
-                if foundI:
-                    maxJ = j
-                i += 1
-            if not stop:
-                found = True
-        j -= 1
-    rightThreshold = maxJ + 172
+    upperThreshold = upper_threshold(image, height, width)
+    lowerThreshold = lower_threshold(image, upperThreshold, height, width)
+    leftThreshold = left_threshold(image, height, width)
+    rightThreshold = right_threshold(image, leftThreshold, height, width)
 
     # Find the edges
     leftTopEdge = left_top_edge(image, upperThreshold, width)
@@ -238,14 +154,15 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
     right_length = ((rightLowerEdge[0]-rightTopEdge[0])
                     ** 2+(rightLowerEdge[1]-rightTopEdge[1])**2)**(1/2)
 
-    # print('longueur côté haut : '+str(upper_length)+' pixels')
-    # print('longueur côté bas : '+str(lower_length)+' pixels')
-    # print('longueur côté gauche : '+str(left_length)+' pixels')
-    # print('longueur côté droit : '+str(right_length)+' pixels')
+    if verbose:
+        print('longueur côté haut : '+str(upper_length)+' pixels')
+        print('longueur côté bas : '+str(lower_length)+' pixels')
+        print('longueur côté gauche : '+str(left_length)+' pixels')
+        print('longueur côté droit : '+str(right_length)+' pixels')
 
-    # Rotation
+    # rotation
     # On considère la droite passant par les deux coins droits et on cherche son intersection avec l'horizontale passant par le coin en bas à gauche
-    if ROTATION:
+    if rotation:
         # Right Lower Edge Angle
         i_A = leftLowerEdge[0]
         i_C = rightTopEdge[0]
@@ -264,7 +181,7 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
         right_intersection = [i_A, j_A-b/a]
         rightLowEdge_dist = ((right_intersection[0]-rightLowerEdge[0])**2 + (
             right_intersection[1]-rightLowerEdge[1])**2)**(1/2)
-        #print(i_A, i_D)
+
         angleRLE = np.arctan(rightLowEdge_dist/lower_length)*180/np.pi
         if i_A < i_D:  # negative angle
             angleRLE *= -1
@@ -358,6 +275,10 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
     # Looking for absurd values
 
     angles = [angleLLE, angleLTE, angleRLE, angleRTE]
+
+    if verbose:
+        print('angles: '+str(angles))
+        
     rotation_angle = 0
     meanLLE = angleLTE/3 + angleRLE/3 + angleRTE/3
     meanLTE = angleLLE/3 + angleRLE/3 + angleRTE/3
@@ -375,6 +296,9 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
 
     if (angleLLE > 0 and angleLTE > 0 and angleRLE > 0 and angleRTE > 0) or (angleLLE < 0 and angleLTE < 0 and angleRLE < 0 and angleRTE < 0):
         rotation_angle = - sum(angles)/len(angles)
+
+    if verbose:
+        print('Rotation de '+str(rotation_angle)+' degrés.')
 
     # Crop and sharpen the image
     leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-172
@@ -518,22 +442,25 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
                     rightLowerEdge[::-1], leftLowerEdge[::-1]])
     src = np.array([[170, 170][::-1], [170, 2630][::-1],
                     [2630, 2630][::-1], [2630, 170][::-1]])
-    # print(src)
-    # print(dst)
+    
+    if verbose:
+        print('Points réels: '+ str(dst))
+        print('Points théoriques: '+str(src))
+    
     tform = tf.ProjectiveTransform()
     tform.estimate(src, dst)
     image = tf.warp(image/255, tform, output_shape=(2800, 2800), cval=1)*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
-    # imagePIL.save('./processed/'+series_name+'/' +
-    #              imgName.split('.')[0].split('_')[1]+'_t.jpg')
+
+    if steps:
+        imagePIL.save('./processed/'+series_name+'/' +
+                    imgName.split('.')[0].split('_')[1]+'_t.jpg')
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]
     height = imagePIL.size[1]
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
-
-    #newImage = np.ones((2800, 2800, 3))*255
 
     # Build the new image
 

@@ -321,7 +321,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     width = 2800
     height = 2800
 
-    if perspective_correction():
+    if perspective_correction:
         # find the square
         # on commence par le haut au milieu, on cherche le premier pixel noir
         found = False

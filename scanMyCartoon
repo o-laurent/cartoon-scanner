@@ -1,4 +1,6 @@
 #!/bin/bash
 
-mogrify -format jpg ./to_process/*
+find ./to_process -type f -name '*.jpeg' -print0 | xargs -0 rename 's/\.jpeg/\.jpg/'
+find ./to_process -type f -name '*.JPG' -print0 | xargs -0 rename 's/\.JPG/\.jpg/'
+find ./to_process/ -type f | grep -v '\.jpg' | xargs mogrify -format jpg
 python3 ./src/main.py

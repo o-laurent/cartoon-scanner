@@ -1,4 +1,3 @@
-#   moyenne des traits du bord, min et max, noircir le trait à fond
 #   gérer 2,3 images
 #   Mettre les images de to_process dans le dossier
 # verbose mode GUI selectable
@@ -543,7 +542,7 @@ def digitalizeImage(series_name, imgName, ROTATION=True):
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
 
-    signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
+    signaturePIL = Image.open('./src/signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)
     numImagePIL.paste(signaturePIL, box)
     numImagePIL.save('./processed/'+series_name+'/' +
@@ -568,7 +567,7 @@ def merge4(series_name, image1, image2, image3, image4):
     newImage = np.ones((2800, 2800, 3))*255
     newImagePIL = Image.fromarray(newImage.astype('uint8'), 'RGB')
 
-    signaturePIL = Image.open('./signature/signature.jpg').resize((75, 505))
+    signaturePIL = Image.open('./src/signature/signature.jpg').resize((75, 505))
     boxs = (2800-115-50-50, 2800-115-505-10, 2800-115-25, 2800-115-10)
 
     newImagePIL.paste(image1PIL, box1)

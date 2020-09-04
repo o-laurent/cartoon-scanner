@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mkdir processed
+mkdir to_process

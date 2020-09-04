@@ -1,6 +1,14 @@
 # cartoon-scanner
 
-To digitalize a cartoon, put all your files in the directory "to_process".
+## Before First Use
+
+The first time you use this software, please type on your terminal
+
+`bash prepare`
+
+## How to use the software
+
+To digitalize a cartoon, put all your files in the directory "./to_process".
 
 Then type `bash scanMyCartoon`.
 

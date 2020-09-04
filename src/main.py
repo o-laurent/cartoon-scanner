@@ -422,8 +422,9 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
             j -= 1
         rightThreshold = maxJ + 172
 
-        # imagePIL.save('./processed/'+series_name+'/' +
-        #              imgName.split('.')[0].split('_')[1]+'_bt.jpg')
+        if steps:
+            imagePIL.save('./processed/'+series_name+'/' +
+                      imgName.split('.')[0].split('_')[1]+'_bt.jpg')
 
         # print(leftThreshold)
         # print(rightThreshold)

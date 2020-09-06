@@ -26,8 +26,9 @@ if len(file_names) >= 1:
     while series_name == '':
         series_name, rotation, perspective_correction, verbose, steps = graphical_user_interface(
             file_names)
+    instaPrep(series_name, rotation, perspective_correction, verbose, steps)
 else:
-    print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier 'processed'")
+    print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier './to_process'")
 
 
 def isBlack(arr):
@@ -512,4 +513,3 @@ def merge4(series_name, image1, image2, image3, image4):
     newImagePIL.save('./processed/'+series_name+'/'+series_name+'.jpg')
 
 
-instaPrep(series_name, rotation, perspective_correction, verbose, steps)

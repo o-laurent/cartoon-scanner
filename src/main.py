@@ -3,6 +3,7 @@
 # ne pas tout retransformer en jpg si ça l'est déjà
 
 # load images with Pillow
+from gui import graphical_user_interface
 from PIL import Image
 import numpy as np
 from imageTools import sharpenImage, post_process
@@ -25,7 +26,7 @@ def isBlack(arr):
 
 def isWhite(arr):
     var = int(arr[0])+int(arr[1])+int(arr[2])
-    return (var > 500)
+    return (var > 400)
 
 
 def instaPrep(series_name: str, rotation=True, perspective_correction=True, verbose=False, steps=False):
@@ -35,7 +36,6 @@ def instaPrep(series_name: str, rotation=True, perspective_correction=True, verb
 
     # Load list of files
     file_list = [f for f in listdir('./to_process/')]
-    print(file_list)
     file_list = [f for f in file_list if f.split('.')[1].lower() == 'jpg' and f.split('_')[0] == series_name and f.split(
         '_')[-1].split('.')[0] != 'd' and (f.split('.')[0]+'_d.'+f.split('.')[1] not in file_list)]
     file_list = list(map(lambda x: x.split('.')[0], file_list))
@@ -86,9 +86,9 @@ def instaPrep(series_name: str, rotation=True, perspective_correction=True, verb
                 digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', rotation, perspective_correction, verbose, steps))
         # Merge
         merge4(series_name, images[0], images[1], images[2], images[3])
-    for i in range(nb):
+    """for i in range(nb):
         rename(src_path+series_name+'_'+str(i+1)+'.jpg',
-               out_path+series_name+'_'+str(i+1)+'.jpg')
+               out_path+series_name+'_'+str(i+1)+'.jpg')"""
 
 
 def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=True, verbose=False, steps=False):
@@ -111,7 +111,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
         - image: (np.array((2800, 2800))) "digitalized" image    
 
     """
-    if rotation:
+    if rotation and verbose:
         print('Tentative de rotation')
     # Open the image form working directory
     imagePIL = Image.open('./to_process/'+imgName)
@@ -128,6 +128,16 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     lowerThreshold = lower_threshold(image, upperThreshold, height, width)
     leftThreshold = left_threshold(image, height, width)
     rightThreshold = right_threshold(image, leftThreshold, height, width)
+
+    if steps:
+        Image.fromarray(image.astype('uint8'), 'RGB').save('./processed/'+series_name+'/' +
+                      imgName.split('.')[0].split('_')[1]+'_bc.jpg')
+
+    if verbose:
+        print('upper limit: ' + str(upperThreshold+172))
+        print('lower limit: ' + str(lowerThreshold-172))
+        print('left limit: ' + str(leftThreshold+172))
+        print('right limit: ' + str(rightThreshold-172))
 
     # Find the edges
     leftTopEdge = left_top_edge(image, upperThreshold, width)
@@ -290,19 +300,30 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     if verbose:
         print('Rotation de '+str(rotation_angle)+' degrés.')
 
-    # Crop and sharpen the image
-    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-172
+    # Crop and sharpen the image #A CHANGER
+    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-5
     rightBorder = max(rightLowerEdge[1],
-                      rightTopEdge[1], rightThreshold-172)+172
-    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+172)-172
+                      rightTopEdge[1], rightThreshold-172)+5
+    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+172)-5
     lowerBorder = max(leftLowerEdge[0],
-                      rightLowerEdge[0], lowerThreshold-172)+172
+                      rightLowerEdge[0], lowerThreshold-172)+5
 
     box = (leftBorder, upperBorder, rightBorder,
            lowerBorder)  # left upper right lower
     white = (255, 255, 255)
     imagePIL = imagePIL.rotate(rotation_angle,
-                               fillcolor=white).crop(box).resize((2800, 2800))
+                               fillcolor=white).crop(box).resize((2466, 2466))
+
+    background = np.ones((2800, 2800, 3))*255
+    backgroundPIL = Image.fromarray(background.astype('uint8'), 'RGB')
+    box = (167, 167, 2633, 2633)
+    backgroundPIL.paste(imagePIL, box)
+
+    imagePIL = backgroundPIL
+    if steps:
+        imagePIL.save('./processed/'+series_name+'/' +
+                      imgName.split('.')[0].split('_')[1]+'_c.jpg')
+
     imageGPIL = imagePIL.convert('L')
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
@@ -312,122 +333,22 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     if perspective_correction:
         # find the square
         # on commence par le haut au milieu, on cherche le premier pixel noir
-        found = False
-        mid = width//2
-        maxI = 0
-        i = 150
-        while not found and i < height - 150:
-            if isBlack(image[i][mid]):
-                j = -round(width/40)
-                stop = False
-                while not stop and j < round(width/40):
-                    foundJ = False
-                    varI = -round(height/50)
-                    while not foundJ and varI < round(height/50):
-                        foundJ = isBlack(image[i+varI][mid+j])
-                        varI += 1
-                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                    stop = not foundJ
-                    if foundJ:
-                        maxI = i
-                    j += 1
-                if not stop:
-                    found = True
-            i += 1
+        upperThreshold = upper_threshold(image, height, width)
+        lowerThreshold = lower_threshold(image, upperThreshold, height, width)
+        leftThreshold = left_threshold(image, height, width)
+        rightThreshold = right_threshold(image, leftThreshold, height, width)
 
-        upperThreshold = maxI-172
 
-        found = False
-        maxI = 0
-        i = height - 150
-        while not found and i > upperThreshold + 150:
-            if isBlack(image[i][mid]):
-                j = -round(width/40)
-                stop = False
-                while not stop and j < round(width/40):
-                    foundJ = False
-                    varI = -round(height/50)
-                    while not foundJ and varI < round(height/50):
-                        foundJ = isBlack(image[i+varI][mid+j])
-                        varI += 1
-                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                    stop = not foundJ
-                    if foundJ:
-                        maxI = i
-                    j += 1
-                if not stop:
-                    found = True
-            i -= 1
-        lowerThreshold = maxI + 172
-
-        found = False
-        mid = height//2
-        maxJ = 0
-        j = 150
-        while not found and j < width-150:
-            if isBlack(image[mid][j]):
-                #print(mid, j)
-                i = -round(height/40)
-                stop = False
-                while not stop and i < round(height/40):
-                    foundI = False
-                    varJ = -round(width/50)
-                    while not foundI and varJ < round(width/50):
-                        foundI = isBlack(image[mid+i][j+varJ])
-                        #print(i+mid,j+varJ,foundI, image[mid+i][j+varJ])
-                        varJ += 1
-                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                    stop = not foundI
-                    # print(stop)
-                    if foundI:
-                        maxJ = j
-                    i += 1
-                if not stop:
-                    found = True
-            j += 1
-        leftThreshold = maxJ - 172
-
-        found = False
-        maxJ = 0
-        j = width-101
-        while not found and j > leftThreshold + 100:
-            if isBlack(image[mid][j]):
-                i = -round(height/40)
-                stop = False
-                while not stop and i < round(height/40):
-                    foundI = False
-                    varJ = -round(width/50)
-                    while not foundI and varJ < round(width/50):
-                        foundI = isBlack(image[mid+i][j+varJ])
-                        varJ += 1
-                    # si on a pas trouvé de noir dans le rectangle, c'est pas un trait du carré
-                    stop = not foundI
-                    if foundI:
-                        maxJ = j
-                    i += 1
-                if not stop:
-                    found = True
-            j -= 1
-        rightThreshold = maxJ + 172
-
-        if steps:
-            imagePIL.save('./processed/'+series_name+'/' +
-                      imgName.split('.')[0].split('_')[1]+'_bt.jpg')
-
-        # print(leftThreshold)
-        # print(rightThreshold)
-        # print(upperThreshold)
-        # print(lowerThreshold)
+        if verbose:
+            print('upper limit: ' + str(upperThreshold+172))
+            print('lower limit: ' + str(lowerThreshold-172))
+            print('left limit: ' + str(leftThreshold+172))
+            print('right limit: ' + str(rightThreshold-172))
 
         leftTopEdge = left_top_edge(image, upperThreshold, 2800)
         rightTopEdge = right_top_edge(image, upperThreshold, 2800)
         rightLowerEdge = right_low_edge(image, lowerThreshold, 2800)
         leftLowerEdge = left_low_edge(image, lowerThreshold, 2800)
-
-        # print(leftTopEdge)
-        # print(rightTopEdge)
-        # print(rightLowerEdge)
-        # print(leftLowerEdge)
 
         image = np.array(imagePIL)
         dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
@@ -447,8 +368,10 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
 
     if steps:
+        #save the image after the homographic transform
         imagePIL.save('./processed/'+series_name+'/' +
                       imgName.split('.')[0].split('_')[1]+'_t.jpg')
+
     imageGPIL = imagePIL.convert('L')
 
     width = imagePIL.size[0]
@@ -456,8 +379,6 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
     # Build the new image
-
-    image[image[:, :, 0]+image[:, :, 1]+image[:, :, 2] > 500] = [255, 255, 255]
     image = post_process(image)
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
@@ -472,7 +393,9 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
 
 def merge4(series_name, image1, image2, image3, image4):
-    print('Assemblage')
+    if verbose:
+        print('Assemblage')
+
     box1 = (95, 95, 1363, 1363)  # include centering (172/2=86)
     box2 = (1437, 95, 2705, 1363)
     box3 = (95, 1437, 1363, 2705)
@@ -500,7 +423,6 @@ def merge4(series_name, image1, image2, image3, image4):
     newImagePIL.save('./processed/'+series_name+'/'+series_name+'.jpg')
 
 
-from gui import graphical_user_interface
 series_name = ''
 file_names = listdir('./to_process/')
 file_names = list(set(map(lambda x: x.split('_')[0], file_names)))
@@ -512,4 +434,3 @@ if len(file_names) >= 1:
     instaPrep(series_name, rotation, perspective_correction, verbose, steps)
 else:
     print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier './to_process'")
-

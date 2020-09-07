@@ -24,6 +24,8 @@ def sharpenImage(imagePIL, imageGPIL, amount=0.75, sigma=15):
 
 
 def post_process(image):
+    image[image[:, :, 0]+image[:, :, 1] +
+                  image[:, :, 2] > 400] = [255, 255, 255]
     image = relu(image/255)*255
     image[image > 255] = 255
     image[image < 90] = 0

@@ -48,7 +48,7 @@ def upper_threshold(image, height: int, width: int):
     found = False
     mid = width//2
     maxI = 0
-    i = 100
+    i = height//30
     while not found and i < height:
         if isBlack(image[i][mid]):
             j = -round(width/40)
@@ -74,7 +74,7 @@ def lower_threshold(image, upperThreshold, height, width):
     found = False
     mid = width//2
     maxI = 0
-    i = height - 101
+    i = (29*height)//30
     while not found and i > upperThreshold + 100:
         if isBlack(image[i][mid]):
             j = -round(width/40)
@@ -100,7 +100,7 @@ def left_threshold(image, height, width):
     found = False
     mid = height//2
     maxJ = 0
-    j = 100
+    j = width//30
     while not found and j < width:
         if isBlack(image[mid][j]):
             i = -round(height/40)
@@ -129,7 +129,7 @@ def right_threshold(image, leftThreshold, height, width):
     found = False
     mid = height//2
     maxJ = 0
-    j = width-101
+    j = (29*width)//30
     while not found and j > leftThreshold + 100:
         if isBlack(image[mid][j]):
             i = -round(height/40)

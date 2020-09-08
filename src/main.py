@@ -385,7 +385,7 @@ def digitalizeImage(series_name, imgName, rotation=True, apple_correction=True, 
     if apple_correction:
         if verbose:
             print('Correction de la rotation apple')
-        numImagePIL = numImagePIL.rotate(90)
+        numImagePIL = numImagePIL.rotate(90).rotate(180)
     signaturePIL = Image.open(
         './src/signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)

@@ -57,7 +57,7 @@ def instaPrep(series_name: str, rotation=True, apple_correction=True, perspectiv
     if nb == 1:
         print('1 photo à traiter')
         digitalizeImage(series_name, series_name+'_1.jpg',
-                        rotation, perspective_correction, verbose, steps)
+                        rotation, apple_correction, perspective_correction, verbose, steps)
 
     if nb == 2:
         print('2 photos à traiter')
@@ -65,7 +65,7 @@ def instaPrep(series_name: str, rotation=True, apple_correction=True, perspectiv
         for i in range(1, 3):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
             digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg',
-                            rotation, perspective_correction, verbose, steps)
+                            rotation, apple_correction, perspective_correction, verbose, steps)
 
     if nb == 3:
         print('3 photos à traiter')
@@ -74,7 +74,7 @@ def instaPrep(series_name: str, rotation=True, apple_correction=True, perspectiv
         for i in range(1, 4):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
             digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg',
-                            rotation, perspective_correction, verbose, steps)
+                            rotation, apple_correction, perspective_correction, verbose, steps)
 
     if nb == 4:
         print('4 photos à traiter')
@@ -83,7 +83,7 @@ def instaPrep(series_name: str, rotation=True, apple_correction=True, perspectiv
         for i in range(1, 5):
             print('Photo '+str(i)+' en traitement. Veuillez patienter.')
             images.append(
-                digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', rotation, perspective_correction, verbose, steps))
+                digitalizeImage(series_name, series_name+'_'+str(i)+'.jpg', rotation, apple_correction, perspective_correction, verbose, steps))
         # Merge
         merge4(series_name, images[0], images[1], images[2], images[3])
     """for i in range(nb):
@@ -367,6 +367,7 @@ def digitalizeImage(series_name, imgName, rotation=True, apple_correction=True, 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
 
     if steps:
+        print('Saving after transform.')
         # save the image after the homographic transform
         imagePIL.save('./processed/'+series_name+'/' +
                       imgName.split('.')[0].split('_')[1]+'_t.jpg')
@@ -386,6 +387,8 @@ def digitalizeImage(series_name, imgName, rotation=True, apple_correction=True, 
         if verbose:
             print('Correction de la rotation apple')
         numImagePIL = numImagePIL.rotate(90).rotate(180)
+        image = np.array(numImagePIL)
+
     signaturePIL = Image.open(
         './src/signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)

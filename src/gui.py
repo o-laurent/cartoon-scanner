@@ -16,6 +16,7 @@ def graphical_user_interface(possibilities):
 
     Output:
     - img_name_input: (str) name of the chosen cartoon series
+    - apple_correction: (int) compensate apple rotation flag
     - rotation_var: (int) true if rotation wanted
     - perspective_var: (int) true if perspective correction wanted
     - verbose_var: (int) true if verbose wanted
@@ -38,8 +39,10 @@ def graphical_user_interface(possibilities):
 
     rotation_var = IntVar()
     Checkbutton(wdw, text="Rotation", variable=rotation_var).pack()
-    prespective_var = IntVar()
-    Checkbutton(wdw, text="Correction de perspective", variable=prespective_var).pack()
+    apple_correction = IntVar()
+    Checkbutton(wdw, text="Rotation Apple", variable=apple_correction).pack()
+    perspective_var = IntVar()
+    Checkbutton(wdw, text="Correction de perspective", variable=perspective_var).pack()
     verbose_var = IntVar()
     Checkbutton(wdw, text="Verbose", variable=verbose_var).pack()
     intermediate_var = IntVar()
@@ -51,4 +54,4 @@ def graphical_user_interface(possibilities):
     # Starting window
     wdw.mainloop()
     wdw.quit()
-    return input_line.get(), rotation_var.get(), prespective_var.get(), verbose_var.get(), intermediate_var.get()
+    return input_line.get(), apple_correction.get(), rotation_var.get(), perspective_var.get(), verbose_var.get(), intermediate_var.get()

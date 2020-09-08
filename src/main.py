@@ -29,7 +29,7 @@ def isWhite(arr):
     return (var > 400)
 
 
-def instaPrep(series_name: str, rotation=True, perspective_correction=True, verbose=False, steps=False):
+def instaPrep(series_name: str, rotation=True, apple_correction=True, perspective_correction=True, verbose=False, steps=False):
     """
     Function which prepares the different cartoons according to the situation.
     """
@@ -91,7 +91,7 @@ def instaPrep(series_name: str, rotation=True, perspective_correction=True, verb
                out_path+series_name+'_'+str(i+1)+'.jpg')"""
 
 
-def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=True, verbose=False, steps=False):
+def digitalizeImage(series_name, imgName, rotation=True, apple_correction=True, perspective_correction=True, verbose=False, steps=False):
     """
     Function which prepares a cartoon doing the following steps:
         - finding the borders and edges and cropping with a 172pix padding
@@ -131,7 +131,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
     if steps:
         Image.fromarray(image.astype('uint8'), 'RGB').save('./processed/'+series_name+'/' +
-                      imgName.split('.')[0].split('_')[1]+'_bc.jpg')
+                                                           imgName.split('.')[0].split('_')[1]+'_bc.jpg')
 
     if verbose:
         print('upper limit: ' + str(upperThreshold+172))
@@ -301,22 +301,22 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
         print('Rotation de '+str(rotation_angle)+' degrés.')
 
     # Crop and sharpen the image #A CHANGER
-    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-5
+    leftBorder = min(leftLowerEdge[1], leftTopEdge[1], leftThreshold+172)-8
     rightBorder = max(rightLowerEdge[1],
-                      rightTopEdge[1], rightThreshold-172)+5
-    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+172)-5
+                      rightTopEdge[1], rightThreshold-172)+8
+    upperBorder = min(rightTopEdge[0], leftTopEdge[0], upperThreshold+172)-8
     lowerBorder = max(leftLowerEdge[0],
-                      rightLowerEdge[0], lowerThreshold-172)+5
+                      rightLowerEdge[0], lowerThreshold-172)+8
 
     box = (leftBorder, upperBorder, rightBorder,
            lowerBorder)  # left upper right lower
     white = (255, 255, 255)
     imagePIL = imagePIL.rotate(rotation_angle,
-                               fillcolor=white).crop(box).resize((2466, 2466))
+                               fillcolor=white).crop(box).resize((2472, 2472))
 
     background = np.ones((2800, 2800, 3))*255
     backgroundPIL = Image.fromarray(background.astype('uint8'), 'RGB')
-    box = (167, 167, 2633, 2633)
+    box = (164, 164, 2636, 2636)
     backgroundPIL.paste(imagePIL, box)
 
     imagePIL = backgroundPIL
@@ -337,7 +337,6 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
         lowerThreshold = lower_threshold(image, upperThreshold, height, width)
         leftThreshold = left_threshold(image, height, width)
         rightThreshold = right_threshold(image, leftThreshold, height, width)
-
 
         if verbose:
             print('upper limit: ' + str(upperThreshold+172))
@@ -368,7 +367,7 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
 
     if steps:
-        #save the image after the homographic transform
+        # save the image after the homographic transform
         imagePIL.save('./processed/'+series_name+'/' +
                       imgName.split('.')[0].split('_')[1]+'_t.jpg')
 
@@ -383,6 +382,10 @@ def digitalizeImage(series_name, imgName, rotation=True, perspective_correction=
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
 
+    if apple_correction:
+        if verbose:
+            print('Correction de la rotation apple')
+        numImagePIL = numImagePIL.rotate(-90)
     signaturePIL = Image.open(
         './src/signature/signature.jpg').resize((75, 505))
     box = (2800-172-50-60, 2800-172-50-505, 2800-172-35, 2800-172-50)
@@ -429,8 +432,9 @@ file_names = list(set(map(lambda x: x.split('_')[0], file_names)))
 
 if len(file_names) >= 1:
     while series_name == '':
-        series_name, rotation, perspective_correction, verbose, steps = graphical_user_interface(
+        series_name, rotation, apple_correction, perspective_correction, verbose, steps = graphical_user_interface(
             file_names)
-    instaPrep(series_name, rotation, perspective_correction, verbose, steps)
+    instaPrep(series_name, apple_correction, rotation,
+              perspective_correction, verbose, steps)
 else:
     print("Aucune image trouvée.\nVeuillez ajouter des images dans le dossier './to_process'")

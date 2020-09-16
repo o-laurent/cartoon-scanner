@@ -378,8 +378,20 @@ def digitalizeImage(series_name, imgName, rotation=True, apple_correction=True, 
     height = imagePIL.size[1]
     image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
 
-    # Build the new image
+    # Extract red part of the image 
+    red_image = np.zeros((2800,2800,3))
+    red_image = np.copy(image)
+    red_image[red_image[:,:,0]< 40 + (red_image[:,:,1]+red_image[:,:,2])/2] = [0,0,0]
+    
+    if steps:
+        # Save the red part image 
+        red_imagePIL = Image.fromarray(red_image.astype('uint8'), 'RGB')
+        red_imagePIL.save('./processed/'+series_name+'/' +
+                     imgName.split('.')[0].split('_')[1]+'_rt.jpg')
+    
+    # Build the new image adding the red part
     image = post_process(image)
+    image = image + red_image
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
 

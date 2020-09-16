@@ -44,7 +44,7 @@ def graphical_user_interface(possibilities):
 
     # Perspective issue correction
     perspective_var = IntVar(value=1)
-    Checkbutton(wdw, text="Correction de perspective",
+    Checkbutton(wdw, text="Correction de Perspective",
                 variable=perspective_var).pack()
 
     # Get more information
@@ -53,7 +53,7 @@ def graphical_user_interface(possibilities):
 
     # Save intermidiate pictures
     intermediate_var = IntVar()
-    Checkbutton(wdw, text="photo intermédiaires",
+    Checkbutton(wdw, text="Photos Intermédiaires",
                 variable=intermediate_var).pack()
 
     ok_btn = Button(wdw, text="OK", command=wdw.quit)

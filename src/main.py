@@ -216,6 +216,7 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
         rightLowerEdge = right_low_edge(image, lowerThreshold, 2800)
         leftLowerEdge = left_low_edge(image, lowerThreshold, 2800)
 
+        # Correcting the perspective 
         image = np.array(imagePIL)
         dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
                         rightLowerEdge[::-1], leftLowerEdge[::-1]])
@@ -229,7 +230,7 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
         tform = tf.ProjectiveTransform()
         tform.estimate(src, dst)
         image = tf.warp(image/255, tform,
-                        output_shape=(2800, 2800), cval=1)*255
+                        output_shape=(2800, 2800), cval=1, order=3)*255
 
     imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
 
@@ -250,7 +251,8 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
     red_image = np.copy(image)
     red_image[red_image[:, :, 0] < 40 +
               (red_image[:, :, 1]+red_image[:, :, 2])/2] = [0, 0, 0]
-
+    image[image[:, :, 0] > 40 +
+              (image[:, :, 1]+image[:, :, 2])/2] = [0, 0, 0]
     if steps:
         # Save the red part image
         red_imagePIL = Image.fromarray(red_image.astype('uint8'), 'RGB')

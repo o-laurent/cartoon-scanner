@@ -6,6 +6,7 @@ from tkinter import Tk, Label, Entry, Button, PhotoImage, Checkbutton
 from tkinter import StringVar, IntVar
 from tkinter.ttk import Combobox
 
+
 def graphical_user_interface(possibilities):
     """
     Graphical user interface for the cartoon scanner.
@@ -28,7 +29,7 @@ def graphical_user_interface(possibilities):
     # Defining the title and the icon
     wdw.title('cartoon_scanner')
     wdw.iconphoto(False, PhotoImage(file='./src/icon/icon.png'))
-    
+
     # Defining the fields
     label_field = Label(wdw, text="Choisissez le nom de la série d'images :")
     label_field.pack()
@@ -37,16 +38,23 @@ def graphical_user_interface(possibilities):
     input_line.set(possibilities[0])
     input_line.pack()
 
-    rotation_var = IntVar(value=1)
-    Checkbutton(wdw, text="Rotation", variable=rotation_var).pack()
+    # Apple rotation flag correction
     apple_correction = IntVar(value=1)
     Checkbutton(wdw, text="Rotation Apple", variable=apple_correction).pack()
+
+    # Perspective issue correction
     perspective_var = IntVar(value=1)
-    Checkbutton(wdw, text="Correction de perspective", variable=perspective_var).pack()
+    Checkbutton(wdw, text="Correction de perspective",
+                variable=perspective_var).pack()
+
+    # Get more information
     verbose_var = IntVar()
     Checkbutton(wdw, text="Verbose", variable=verbose_var).pack()
+
+    # Save intermidiate pictures
     intermediate_var = IntVar()
-    Checkbutton(wdw, text="photo intermédiaires", variable=intermediate_var).pack()
+    Checkbutton(wdw, text="photo intermédiaires",
+                variable=intermediate_var).pack()
 
     ok_btn = Button(wdw, text="OK", command=wdw.quit)
     ok_btn.pack()
@@ -54,4 +62,4 @@ def graphical_user_interface(possibilities):
     # Starting window
     wdw.mainloop()
     wdw.quit()
-    return input_line.get(), apple_correction.get(), rotation_var.get(), perspective_var.get(), verbose_var.get(), intermediate_var.get()
+    return input_line.get(), apple_correction.get(), perspective_var.get(), verbose_var.get(), intermediate_var.get()

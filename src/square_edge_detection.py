@@ -42,11 +42,17 @@ def isCorner(image, i, j):
 
 
 # Border determination functions
-def upper_threshold(image, height: int, width: int):
-    # find the square
-    # on commence par le haut au milieu, on cherche le premier pixel noir
+def upper_threshold(image, height: int, width: int, shift: int=0):
+    """
+    Finds the ordinate of the upper stroke
+    Input:
+    - image: List(List(int))
+    - shift: starting abcissa shift in percentage (%)
+    Output:
+    - ordinate: (int)
+    """
     found = False
-    mid = width//2
+    mid = width//2+round(shift/100*width)
     maxI = 0
     i = height//30
     while not found and i < height:
@@ -70,9 +76,17 @@ def upper_threshold(image, height: int, width: int):
     return maxI - 172
 
 
-def lower_threshold(image, upperThreshold, height, width):
+def lower_threshold(image, upperThreshold: int, height: int, width: int, shift: int=0):
+    """
+    Finds the ordinate of the lower stroke
+    Input:
+    - image: List(List(int))
+    - shift: starting abcissa shift in percentage (%)
+    Output:
+    - ordinate: (int)
+    """
     found = False
-    mid = width//2
+    mid = width//2+round(shift/100*width)
     maxI = 0
     i = (29*height)//30
     while not found and i > upperThreshold + 100:
@@ -96,9 +110,17 @@ def lower_threshold(image, upperThreshold, height, width):
     return maxI + 172
 
 
-def left_threshold(image, height, width):
+def left_threshold(image, height, width, shift: int=0):
+    """
+    Finds the abcissa of the left stroke
+    Input:
+    - image: List(List(int))
+    - shift: starting ordinate shift in percentage (%)
+    Output:
+    - abcissa: (int)
+    """
     found = False
-    mid = height//2
+    mid = height//2+round(shift/100*height)
     maxJ = 0
     j = width//30
     while not found and j < width:
@@ -125,9 +147,17 @@ def left_threshold(image, height, width):
     return maxJ - 172
 
 
-def right_threshold(image, leftThreshold, height, width):
+def right_threshold(image, leftThreshold, height, width, shift: int=0):
+    """
+    Finds the abcissa of the right stroke
+    Input:
+    - image: List(List(int))
+    - shift: starting ordinate shift in percentage (%)
+    Output:
+    - abcissa: (int)
+    """
     found = False
-    mid = height//2
+    mid = height//2+round(shift/100*height)
     maxJ = 0
     j = (29*width)//30
     while not found and j > leftThreshold + 100:
@@ -151,7 +181,7 @@ def right_threshold(image, leftThreshold, height, width):
             if not stop:
                 found = True
         j -= 1
-    return maxJ + 172
+    return maxJ + 172 #172 margin
 
 
 # Square Edge determination functions

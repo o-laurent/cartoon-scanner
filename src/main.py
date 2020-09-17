@@ -196,27 +196,41 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
             './to_process/'+imgName).resize((2800, 2800), Image.LANCZOS)
         imageGPIL = imagePIL.convert('L')
 
+        if apple_correction:
+            if verbose:
+                print('Correction de la rotation apple')
+            imagePIL = imagePIL.rotate(90).rotate(180)
+            if steps:
+                imagePIL.save('./processed/'+series_name+'/' +
+                              imgName.split('.')[0].split('_')[1]+'_r.jpg')
+        imageGPIL = imagePIL.convert('L')
         image = sharpenImage(imagePIL, imageGPIL, 0.75, 15)
-
+        if steps:
+            imagePIL = Image.fromarray(np.uint8(image)).convert('RGB')
+            imagePIL.save('./processed/'+series_name+'/' +
+                          imgName.split('.')[0].split('_')[1]+'_rs.jpg')
         # find the square
         # on commence par le haut au milieu, on cherche le premier pixel noir
         upperThreshold = upper_threshold(image, height, width)
         lowerThreshold = lower_threshold(image, upperThreshold, height, width)
-        leftThreshold = left_threshold(image, height, width)
-        rightThreshold = right_threshold(image, leftThreshold, height, width)
-
+        #left_upper_threshold = left_threshold(image, height, width, -15)
+        #left_lower_threshold = left_threshold(image, height, width, 15)
+        #right_upper_threshold = right_threshold(image, leftThreshold, height, width, -15)
+        #right_lower_threshold = right_threshold(image, leftThreshold, height, width, 15)
         if verbose:
             print('upper limit: ' + str(upperThreshold+172))
             print('lower limit: ' + str(lowerThreshold-172))
-            print('left limit: ' + str(leftThreshold+172))
-            print('right limit: ' + str(rightThreshold-172))
+            #print('left lower limit: ' + str(leftThreshold+172))
+            #print('left upper limit: ' + str(leftThreshold+172))
+            #print('right lower limit: ' + str(rightThreshold-172))
+            #print('right upper limit: ' + str(rightThreshold-172))
 
         leftTopEdge = left_top_edge(image, upperThreshold, 2800)
         rightTopEdge = right_top_edge(image, upperThreshold, 2800)
         rightLowerEdge = right_low_edge(image, lowerThreshold, 2800)
         leftLowerEdge = left_low_edge(image, lowerThreshold, 2800)
 
-        # Correcting the perspective 
+        # Correcting the perspective
         image = np.array(imagePIL)
         dst = np.array([leftTopEdge[::-1], rightTopEdge[::-1],
                         rightLowerEdge[::-1], leftLowerEdge[::-1]])
@@ -252,7 +266,7 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
     red_image[red_image[:, :, 0] < 40 +
               (red_image[:, :, 1]+red_image[:, :, 2])/2] = [0, 0, 0]
     image[image[:, :, 0] > 40 +
-              (image[:, :, 1]+image[:, :, 2])/2] = [0, 0, 0]
+          (image[:, :, 1]+image[:, :, 2])/2] = [0, 0, 0]
     if steps:
         # Save the red part image
         red_imagePIL = Image.fromarray(red_image.astype('uint8'), 'RGB')
@@ -264,12 +278,7 @@ def digitalizeImage(series_name, imgName,  apple_correction=True, perspective_co
     image = image + red_image
 
     numImagePIL = Image.fromarray(image.astype('uint8'), 'RGB')
-
-    if apple_correction:
-        if verbose:
-            print('Correction de la rotation apple')
-        numImagePIL = numImagePIL.rotate(90).rotate(180)
-        image = np.array(numImagePIL)
+    image = np.array(numImagePIL)
 
     signaturePIL = Image.open(
         './src/signature/signature.jpg').resize((75, 505))

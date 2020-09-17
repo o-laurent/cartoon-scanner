@@ -20,7 +20,7 @@ def sharpenImage(imagePIL, imageGPIL, amount=0.75, sigma=15):
     image = (image + sub3)*255
     image[image > 255] = 255
     image[image < 0] = 0
-    return image
+    return image.astype(int)
 
 
 def post_process(image):

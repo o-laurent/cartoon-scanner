@@ -137,3 +137,18 @@
 
     if verbose:
         print('Rotation de '+str(rotation_angle)+' degrés.')
+
+def intersection_right(image, width, leftLowEdge, lower_length):
+    i = leftLowEdge[0]
+    j = min(width-1, round(leftLowEdge[1] + 1.2*lower_length))
+    stack = [False]*7
+    comp = [True]*7
+    found = False
+    while not found:
+        if stack == comp:
+            found = True
+        else:
+            j -= 1
+            stack.pop(0)
+            stack.append(isBlack(image[i][j]))
+    return [i, j+7]

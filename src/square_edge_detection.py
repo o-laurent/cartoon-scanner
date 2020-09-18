@@ -81,6 +81,8 @@ def lower_threshold(image, upperThreshold: int, height: int, width: int, shift: 
     Finds the ordinate of the lower stroke
     Input:
     - image: List(List(int))
+    - height: (int)
+    - width: (int)
     - shift: starting abcissa shift in percentage (%)
     Output:
     - ordinate: (int)
@@ -115,6 +117,8 @@ def left_threshold(image, height, width, shift: int=0):
     Finds the abcissa of the left stroke
     Input:
     - image: List(List(int))
+    - height: (int)
+    - width: (int)
     - shift: starting ordinate shift in percentage (%)
     Output:
     - abcissa: (int)
@@ -152,6 +156,9 @@ def right_threshold(image, leftThreshold, height, width, shift: int=0):
     Finds the abcissa of the right stroke
     Input:
     - image: List(List(int))
+    - leftThreshold: (int)
+    - height: (int)
+    - width: (int)
     - shift: starting ordinate shift in percentage (%)
     Output:
     - abcissa: (int)
@@ -187,7 +194,9 @@ def right_threshold(image, leftThreshold, height, width, shift: int=0):
 # Square Edge determination functions
 # Coin supérieur gauche
 def left_top_edge(image, upperThreshold, width):
-    """ runs along the cartoon strokes to find the left top edge """
+    """ 
+    runs along the cartoon strokes to find the left top edge of the square.
+    """
     i = upperThreshold + 172
     j = width//2
     corner = False
@@ -223,7 +232,7 @@ def left_top_edge(image, upperThreshold, width):
 
 
 def right_top_edge(image, upperThreshold, width):
-    """ runs along the cartoon strokes to find the right top edge """
+    """ runs along the cartoon strokes to find the right top edge of the square."""
     i = upperThreshold + 172
     j = width//2
     corner = False
@@ -256,7 +265,7 @@ def right_top_edge(image, upperThreshold, width):
 
 
 def left_low_edge(image, lowerThreshold, width):
-    """ runs along the cartoon strokes to find the left low edge """
+    """ runs along the cartoon strokes to find the left low edge of the square."""
     i = lowerThreshold - 172
     j = width//2
     corner = False
@@ -289,7 +298,7 @@ def left_low_edge(image, lowerThreshold, width):
 
 
 def right_low_edge(image, lowerThreshold, width):
-    """ runs along the cartoon strokes to find the right low edge """
+    """ runs along the cartoon strokes to find the right low edge of the square."""
     i = lowerThreshold - 172
     j = width//2
     corner = False
@@ -319,17 +328,3 @@ def right_low_edge(image, lowerThreshold, width):
     return [i, j]
 
 
-def intersection_right(image, width, leftLowEdge, lower_length):
-    i = leftLowEdge[0]
-    j = min(width-1, round(leftLowEdge[1] + 1.2*lower_length))
-    stack = [False]*7
-    comp = [True]*7
-    found = False
-    while not found:
-        if stack == comp:
-            found = True
-        else:
-            j -= 1
-            stack.pop(0)
-            stack.append(isBlack(image[i][j]))
-    return [i, j+7]

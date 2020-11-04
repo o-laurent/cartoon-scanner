@@ -2,7 +2,7 @@
 
 ## Before First Use
 
-The first time you use this software, please type on your terminal
+The first time you use this software, go in your `cartoon-scanner` directory then type on your terminal
 
 `./prepare`
 
